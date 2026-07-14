@@ -46,10 +46,10 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <TopNav />
-      <main className="mx-auto max-w-[1440px] px-6 pb-20 pt-6">
-        <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>
+      <main className="mx-auto max-w-[1440px] px-4 pb-20 pt-6 sm:px-6">
+        <header className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
             {subtitle ? (
               <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
             ) : null}
@@ -62,12 +62,13 @@ export function AppShell({
   );
 }
 
+
 function TopNav() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
       {/* Row 1: brand · search · actions */}
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-4 px-6">
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:gap-4 sm:px-6">
         {/* Brand */}
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -131,7 +132,7 @@ function TopNav() {
 
       {/* Row 2: primary nav — dedicated row for clarity */}
       <div className="border-t border-border/60">
-        <nav className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-4 py-2">
+        <nav className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-3 py-2 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {NAV.map((n) => {
             const active = n.exact ? currentPath === n.to : currentPath.startsWith(n.to);
             return (

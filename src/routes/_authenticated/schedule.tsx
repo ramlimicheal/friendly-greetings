@@ -47,65 +47,70 @@ function SchedulePage() {
     >
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]">
         <Card className="!p-0 overflow-hidden">
-          <div className="grid" style={{ gridTemplateColumns: `72px repeat(${chairs.length}, 1fr)` }}>
-            <div />
-            {chairs.map((c) => (
-              <div key={c} className="border-l border-border bg-muted/40 px-3 py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Circle className="h-2 w-2 fill-primary text-primary" /> Chair {c}
-                </div>
-                <div className="text-[11px] text-muted-foreground">
-                  {c === 1 && "Hygiene · Nadia"}
-                  {c === 2 && "Restorative · Dr. Rina"}
-                  {c === 3 && "Surgical · Dr. Kai"}
-                  {c === 4 && "Perio · Leo"}
-                </div>
-              </div>
-            ))}
-
-            {/* time rows */}
-            {hours.map((h) => (
-              <div key={h} className="contents">
-                <div className="border-t border-border px-2 py-1 text-right text-[11px] font-medium text-muted-foreground" style={{ height: hourH }}>
-                  {h}:00
-                </div>
+          <div className="overflow-x-auto">
+            <div className="relative min-w-[640px]">
+              <div className="grid" style={{ gridTemplateColumns: `72px repeat(${chairs.length}, minmax(140px, 1fr))` }}>
+                <div />
                 {chairs.map((c) => (
-                  <div key={c} className="relative border-l border-t border-border" style={{ height: hourH }}>
-                    {/* half-hour line */}
-                    <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
+                  <div key={c} className="border-l border-border bg-muted/40 px-3 py-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <Circle className="h-2 w-2 fill-primary text-primary" /> Chair {c}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {c === 1 && "Hygiene · Nadia"}
+                      {c === 2 && "Restorative · Dr. Rina"}
+                      {c === 3 && "Surgical · Dr. Kai"}
+                      {c === 4 && "Perio · Leo"}
+                    </div>
+                  </div>
+                ))}
+
+                {/* time rows */}
+                {hours.map((h) => (
+                  <div key={h} className="contents">
+                    <div className="border-t border-border px-2 py-1 text-right text-[11px] font-medium text-muted-foreground" style={{ height: hourH }}>
+                      {h}:00
+                    </div>
+                    {chairs.map((c) => (
+                      <div key={c} className="relative border-l border-t border-border" style={{ height: hourH }}>
+                        {/* half-hour line */}
+                        <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
-            ))}
-          </div>
 
-          {/* absolutely positioned appointments layer */}
-          <div className="relative -mt-[600px]" style={{ height: hours.length * hourH }}>
-            <div className="grid h-full" style={{ gridTemplateColumns: `72px repeat(${chairs.length}, 1fr)` }}>
-              <div />
-              {chairs.map((c) => (
-                <div key={c} className="relative">
-                  {todaysAppointments.filter((a) => a.chair === c).map((a) => {
-                    const [hh, mm] = a.start.split(":").map(Number);
-                    const top = ((hh - 8) * 60 + mm) * (hourH / 60);
-                    const height = a.duration * (hourH / 60);
-                    return (
-                      <div
-                        key={a.id}
-                        className={"absolute left-1 right-1 rounded-xl px-2 py-1.5 text-[11px] " + STATUS_TONE[a.status]}
-                        style={{ top, height: height - 3 }}
-                      >
-                        <div className="font-semibold">{a.start} · {a.patient}</div>
-                        <div className="opacity-80">{a.procedure}</div>
-                        <div className="mt-0.5 text-[10px] opacity-70">{a.provider}</div>
-                      </div>
-                    );
-                  })}
+              {/* absolutely positioned appointments layer */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ height: hours.length * hourH }}>
+                <div className="grid h-full" style={{ gridTemplateColumns: `72px repeat(${chairs.length}, minmax(140px, 1fr))` }}>
+                  <div />
+                  {chairs.map((c) => (
+                    <div key={c} className="relative">
+                      {todaysAppointments.filter((a) => a.chair === c).map((a) => {
+                        const [hh, mm] = a.start.split(":").map(Number);
+                        const top = ((hh - 8) * 60 + mm) * (hourH / 60);
+                        const height = a.duration * (hourH / 60);
+                        return (
+                          <div
+                            key={a.id}
+                            className={"pointer-events-auto absolute left-1 right-1 rounded-xl px-2 py-1.5 text-[11px] " + STATUS_TONE[a.status]}
+                            style={{ top, height: height - 3 }}
+                          >
+                            <div className="font-semibold">{a.start} · {a.patient}</div>
+                            <div className="opacity-80">{a.procedure}</div>
+                            <div className="mt-0.5 text-[10px] opacity-70">{a.provider}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </Card>
+
 
         <div className="space-y-4">
           <Card>
