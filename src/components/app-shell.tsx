@@ -150,7 +150,7 @@ function TopNav() {
       {/* Row 2: primary nav — dedicated row for clarity */}
       <div className="border-t border-border/60">
         <nav className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-3 py-2 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {NAV.map((n) => {
+          {visibleNav.map((n) => {
             const active = n.exact ? currentPath === n.to : currentPath.startsWith(n.to);
             return (
               <Link
