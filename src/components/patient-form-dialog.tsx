@@ -138,6 +138,14 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
             <Field label="Allergies (comma-separated)">
               <input value={allergiesInput} onChange={(e) => setAllergiesInput(e.target.value)} className={inputCls} placeholder="Penicillin, Latex" />
             </Field>
+            <Field label="Medical conditions (comma-separated)">
+              <input value={conditionsInput} onChange={(e) => setConditionsInput(e.target.value)} className={inputCls} placeholder="Diabetes, Hypertension" />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Medications (comma-separated)">
+                <input value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} className={inputCls} placeholder="Metformin 500mg, Lisinopril 10mg" />
+              </Field>
+            </div>
             <div className="sm:col-span-2">
               <Field label="Address">
                 <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />
