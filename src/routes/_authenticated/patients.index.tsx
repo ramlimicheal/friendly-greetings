@@ -4,7 +4,7 @@ import { Plus, Search, Filter, Download } from "lucide-react";
 import { AppShell, Card, GhostButton, PrimaryButton, Pill } from "@/components/app-shell";
 import { patients } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/patients/")({
+export const Route = createFileRoute("/_authenticated/patients/")({
   head: () => ({
     meta: [
       { title: "Patients — Enamel Dental Clinic" },

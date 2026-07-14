@@ -3,7 +3,7 @@ import { Download, DollarSign, TrendingUp, Users } from "lucide-react";
 import { AppShell, Card, GhostButton, SectionHeader } from "@/components/app-shell";
 import { revenueLast30, procedureMix } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/reports")({
+export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
       { title: "Reports — Enamel Dental Clinic" },

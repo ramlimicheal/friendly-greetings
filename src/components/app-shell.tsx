@@ -1,4 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useRef, useEffect } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -119,18 +123,11 @@ function TopNav() {
           </button>
 
           {/* User */}
-          <button className="ml-1 flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-2.5 transition hover:bg-muted">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-accent-foreground">
-              DR
-            </span>
-            <div className="hidden pr-0.5 text-left sm:block">
-              <div className="text-xs font-semibold leading-tight">Dr. Rina Okafor</div>
-              <div className="text-[10px] leading-tight text-muted-foreground">Lead Dentist</div>
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          <UserMenu />
         </div>
       </div>
+
+
 
       {/* Row 2: primary nav — dedicated row for clarity */}
       <div className="border-t border-border/60">
@@ -268,5 +265,77 @@ export function GhostButton({
       {Icon ? <Icon className="h-4 w-4" /> : null}
       {children}
     </button>
+  );
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Admin",
+  dentist: "Dentist",
+  hygienist: "Hygienist",
+  front_desk: "Front desk",
+};
+
+function UserMenu() {
+  const { user, profile, roles, loading } = useAuth();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const name = profile?.full_name ?? user?.email ?? "Account";
+  const initials = (name || "?")
+    .split(" ")
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  const roleLabel = roles[0] ? ROLE_LABEL[roles[0]] ?? roles[0] : loading ? "" : "No role";
+
+  const signOut = async () => {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="ml-1 flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-2.5 transition hover:bg-muted"
+      >
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-accent-foreground">
+          {initials || "?"}
+        </span>
+        <div className="hidden pr-0.5 text-left sm:block">
+          <div className="text-xs font-semibold leading-tight">{name}</div>
+          <div className="text-[10px] leading-tight text-muted-foreground">{roleLabel}</div>
+        </div>
+        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-40 mt-2 w-56 rounded-xl border border-border bg-card p-1 ring-1 ring-border/50">
+          <div className="px-3 py-2">
+            <div className="text-xs font-semibold">{name}</div>
+            <div className="truncate text-[11px] text-muted-foreground">{user?.email}</div>
+          </div>
+          <div className="my-1 h-px bg-border" />
+          <button
+            onClick={signOut}
+            className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-foreground hover:bg-muted"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
