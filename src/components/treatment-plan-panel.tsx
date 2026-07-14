@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import {
   addItem, createPlan, deleteItem, deletePlan, listFees, listItems, listPlansForPatient,
   planTotals, updateItem, updatePlan, ITEM_STATUSES, PLAN_STATUSES,
   type FeeRow, type TreatmentPlanItemRow, type TreatmentPlanRow,
 } from "@/lib/treatment-plans-api";
+import { PlanExplainerDialog } from "@/components/plan-explainer-dialog";
+
 
 export function TreatmentPlanPanel({ patientId }: { patientId: string }) {
   const [plans, setPlans] = useState<TreatmentPlanRow[]>([]);
