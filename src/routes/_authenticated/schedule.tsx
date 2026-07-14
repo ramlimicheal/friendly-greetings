@@ -51,12 +51,17 @@ const CHAIR_MEANING: Record<number, string> = {
 function SchedulePage() {
   const [date, setDate] = useState<Date>(() => new Date());
   const [items, setItems] = useState<AppointmentWithPatient[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistWithPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dragMsg, setDragMsg] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AppointmentWithPatient | null>(null);
   const [defaultStart, setDefaultStart] = useState<Date | undefined>();
   const [defaultChair, setDefaultChair] = useState<number | undefined>();
+  const [prefill, setPrefill] = useState<{ patient_id?: string; procedure?: string; provider?: string; duration_min?: number } | undefined>();
+  const [waitlistFill, setWaitlistFill] = useState<WaitlistWithPatient | null>(null);
+  const dragId = useRef<string | null>(null);
 
   const from = useMemo(() => startOfDay(date), [date]);
   const to = useMemo(() => endOfDay(date), [date]);
