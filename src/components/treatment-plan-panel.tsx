@@ -8,7 +8,7 @@ import {
 import { PlanExplainerDialog } from "@/components/plan-explainer-dialog";
 
 
-export function TreatmentPlanPanel({ patientId }: { patientId: string }) {
+export function TreatmentPlanPanel({ patientId, patientName }: { patientId: string; patientName?: string }) {
   const [plans, setPlans] = useState<TreatmentPlanRow[]>([]);
   const [fees, setFees] = useState<FeeRow[]>([]);
   const [loading, setLoading] = useState(true);
