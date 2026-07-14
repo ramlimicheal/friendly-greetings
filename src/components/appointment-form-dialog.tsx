@@ -43,10 +43,12 @@ export function AppointmentFormDialog({
   initial,
   defaultStart,
   defaultChair,
+  prefill,
 }: Props) {
   const [patients, setPatients] = useState<PatientRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conflictWarn, setConflictWarn] = useState<string | null>(null);
 
   const [patient_id, setPatientId] = useState("");
   const [chair, setChair] = useState<number>(1);
@@ -60,6 +62,7 @@ export function AppointmentFormDialog({
   useEffect(() => {
     if (!open) return;
     setError(null);
+    setConflictWarn(null);
     listPatients()
       .then(setPatients)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load patients"));
@@ -77,16 +80,16 @@ export function AppointmentFormDialog({
       setStatus(initial.status);
       setNotes(initial.notes ?? "");
     } else {
-      setPatientId("");
+      setPatientId(prefill?.patient_id ?? "");
       setChair(defaultChair ?? 1);
-      setProvider("");
-      setProcedure("");
+      setProvider(prefill?.provider ?? "");
+      setProcedure(prefill?.procedure ?? "");
       setStartAt(toLocalInput(defaultStart ?? nextHalfHour()));
-      setDuration(30);
+      setDuration(prefill?.duration_min ?? 30);
       setStatus("confirmed");
       setNotes("");
     }
-  }, [open, initial, defaultStart, defaultChair]);
+  }, [open, initial, defaultStart, defaultChair, prefill]);
 
   const patientOptions = useMemo(
     () =>
