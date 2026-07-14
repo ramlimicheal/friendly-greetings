@@ -260,8 +260,8 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
         }
       />
       <div className="overflow-x-auto">
-        <div style={{ minWidth: totalW + 72 }}>
-          <div className="grid" style={{ gridTemplateColumns: `72px repeat(${hours.length}, ${hourW}px)` }}>
+        <div style={{ minWidth: totalW + labelW }}>
+          <div className="grid" style={{ gridTemplateColumns: `${labelW}px repeat(${hours.length}, ${hourW}px)` }}>
             <div />
             {hours.map((h) => (
               <div key={h} className="border-l border-dashed border-border px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -270,11 +270,11 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
             ))}
           </div>
 
-          <div className="relative grid" style={{ gridTemplateColumns: `72px ${totalW}px` }}>
+          <div className="relative grid" style={{ gridTemplateColumns: `${labelW}px ${totalW}px` }}>
             {showNow && (
               <div
                 className="pointer-events-none absolute top-0 z-20 h-full"
-                style={{ left: 72 + nowLeft }}
+                style={{ left: labelW + nowLeft }}
               >
                 <div className="relative h-full w-px bg-red-500/70">
                   <span className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
@@ -283,9 +283,9 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
             )}
             {chairs.map((c) => (
               <div key={c} className="contents">
-                <div className="flex items-center gap-1 py-2 text-xs font-medium text-muted-foreground">
+                <div className="flex items-center gap-1 border-t border-border py-2 text-xs font-medium text-muted-foreground">
                   <Circle className="h-2 w-2 fill-primary text-primary" />
-                  Chair {c}
+                  <span className="truncate">Ch {c}</span>
                 </div>
                 <div className="relative border-t border-border" style={{ height: rowH }}>
                   {todaysAppointments
@@ -303,7 +303,7 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
                             toneMap[a.status] +
                             (past ? " opacity-55" : "")
                           }
-                          style={{ left, width: Math.max(width - 3, 40) }}
+                          style={{ left, width: Math.max(width - 3, 36) }}
                           title={`${a.patient} — ${a.procedure}`}
                         >
                           {a.start} · {a.patient}
@@ -316,6 +316,7 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
           </div>
         </div>
       </div>
+
     </Card>
   );
 }
