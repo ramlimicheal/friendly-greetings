@@ -10,6 +10,7 @@ import {
   createAppointment,
   deleteAppointment,
   endOfDay,
+  listAppointmentHistory,
   listAppointmentsForRange,
   rescheduleAppointment,
   startOfDay,
@@ -19,6 +20,8 @@ import {
   type AppointmentWithPatient,
 } from "@/lib/appointments-api";
 import { listWaitlist, markWaitlistScheduled, type WaitlistWithPatient } from "@/lib/waitlist-api";
+import { scoreNoShow, RISK_TONE, RISK_LABEL } from "@/lib/no-show-risk";
+
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
@@ -62,6 +65,7 @@ function SchedulePage() {
   const [prefill, setPrefill] = useState<{ patient_id?: string; procedure?: string; provider?: string; duration_min?: number } | undefined>();
   const [waitlistFill, setWaitlistFill] = useState<WaitlistWithPatient | null>(null);
   const dragId = useRef<string | null>(null);
+  const [history, setHistory] = useState<{ patient_id: string; start_at: string; status: AppointmentStatus }[]>([]);
 
   const from = useMemo(() => startOfDay(date), [date]);
   const to = useMemo(() => endOfDay(date), [date]);
@@ -69,12 +73,14 @@ function SchedulePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [appts, wl] = await Promise.all([
+      const [appts, wl, hist] = await Promise.all([
         listAppointmentsForRange(from, to),
         listWaitlist("active"),
+        listAppointmentHistory(180),
       ]);
       setItems(appts);
       setWaitlist(wl);
+      setHistory(hist);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load appointments");
@@ -82,6 +88,7 @@ function SchedulePage() {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     load();
@@ -290,6 +297,8 @@ function SchedulePage() {
                         const height = (a.duration_min / 60) * hourH;
                         if (top < 0 || top > hours.length * hourH) return null;
                         const draggable = a.status !== "completed" && a.status !== "cancelled" && a.status !== "no-show";
+                        const upcoming = a.status !== "completed" && a.status !== "cancelled" && a.status !== "no-show" && d.getTime() >= Date.now() - 3600_000;
+                        const risk = upcoming ? scoreNoShow(a, history) : null;
                         return (
                           <div
                             key={a.id}
@@ -308,16 +317,24 @@ function SchedulePage() {
                               STATUS_TONE[a.status]
                             }
                             style={{ top, height: Math.max(height - 3, 20) }}
-                            title={`${a.patient_name} — ${a.procedure}${draggable ? " (drag to reschedule)" : ""}`}
+                            title={`${a.patient_name} — ${a.procedure}${risk ? `\n${RISK_LABEL[risk.level]} (${risk.score}) — ${risk.reasons.join(", ")}` : ""}${draggable ? "\n(drag to reschedule)" : ""}`}
                           >
-                            <div className="truncate font-semibold">
-                              {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                            <div className="flex items-center justify-between gap-1">
+                              <div className="truncate font-semibold">
+                                {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                              </div>
+                              {risk && risk.level !== "low" && (
+                                <span className={"shrink-0 rounded-full px-1.5 py-0 text-[9px] font-bold uppercase tracking-wide " + RISK_TONE[risk.level]}>
+                                  {risk.level === "high" ? "⚠︎" : "•"} {risk.score}
+                                </span>
+                              )}
                             </div>
                             <div className="truncate opacity-80">{a.procedure}</div>
                             <div className="mt-0.5 truncate text-[10px] opacity-70">{a.provider}</div>
                           </div>
                         );
                       })}
+
                     </div>
                   ))}
                 </div>

@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, DollarSign, FileText, ShieldCheck, Receipt, Printer, Edit3, Wallet, AlertCircle, ArrowDownRight } from "lucide-react";
+import { Plus, DollarSign, FileText, ShieldCheck, Receipt, Printer, Edit3, Wallet, AlertCircle, ArrowDownRight, Sparkles } from "lucide-react";
+import { BenefitsExtractorDialog } from "@/components/benefits-extractor-dialog";
+
 import { AppShell, Card, GhostButton, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
 import {
   agingBuckets,
@@ -49,6 +51,8 @@ function BillingPage() {
   const [invoiceDialog, setInvoiceDialog] = useState<{ open: boolean; editing?: any }>({ open: false });
   const [payDialog, setPayDialog] = useState<{ open: boolean; invoiceId?: string | null }>({ open: false });
   const [claimDialog, setClaimDialog] = useState<{ open: boolean; editing?: any }>({ open: false });
+  const [aiOpen, setAiOpen] = useState(false);
+
 
   const patientsQ = useQuery({ queryKey: ["patients"], queryFn: listPatients });
   const invoicesQ = useQuery({ queryKey: ["invoices"], queryFn: () => listInvoices() });
@@ -96,11 +100,15 @@ function BillingPage() {
       subtitle="Invoices, payments, insurance claims, and receivables"
       actions={
         <>
+          <button onClick={() => setAiOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3.5 py-2 text-xs font-semibold text-white hover:opacity-90">
+            <Sparkles className="h-3.5 w-3.5" /> AI benefits
+          </button>
           <GhostButton icon={Wallet} onClick={() => setPayDialog({ open: true })}>Record payment</GhostButton>
           <GhostButton icon={FileText} onClick={() => setClaimDialog({ open: true })}>New claim</GhostButton>
           <PrimaryButton icon={Plus} onClick={() => setInvoiceDialog({ open: true })}>New invoice</PrimaryButton>
         </>
       }
+
     >
       {/* Summary */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -254,7 +262,14 @@ function BillingPage() {
         }}
         onDelete={claimDialog.editing ? async () => { await deleteClaim(claimDialog.editing.id); invalidate(); } : undefined}
       />
+
+      <BenefitsExtractorDialog
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["insurance_plans"] })}
+      />
     </AppShell>
+
   );
 }
 

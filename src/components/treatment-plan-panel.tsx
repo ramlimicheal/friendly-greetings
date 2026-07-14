@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, CheckCircle2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, CheckCircle2, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
 import {
   addItem, createPlan, deleteItem, deletePlan, listFees, listItems, listPlansForPatient,
   planTotals, updateItem, updatePlan, ITEM_STATUSES, PLAN_STATUSES,
   type FeeRow, type TreatmentPlanItemRow, type TreatmentPlanRow,
 } from "@/lib/treatment-plans-api";
+import { PlanExplainerDialog } from "@/components/plan-explainer-dialog";
 
-export function TreatmentPlanPanel({ patientId }: { patientId: string }) {
+
+export function TreatmentPlanPanel({ patientId, patientName }: { patientId: string; patientName?: string }) {
   const [plans, setPlans] = useState<TreatmentPlanRow[]>([]);
   const [fees, setFees] = useState<FeeRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export function TreatmentPlanPanel({ patientId }: { patientId: string }) {
       ) : (
         <div className="space-y-3">
           {plans.map((p) => (
-            <PlanCard key={p.id} plan={p} fees={fees} onChange={load} onDelete={async () => { await deletePlan(p.id); await load(); }} />
+            <PlanCard key={p.id} plan={p} fees={fees} patientName={patientName ?? "the patient"} onChange={load} onDelete={async () => { await deletePlan(p.id); await load(); }} />
           ))}
         </div>
       )}
@@ -61,12 +63,14 @@ export function TreatmentPlanPanel({ patientId }: { patientId: string }) {
   );
 }
 
-function PlanCard({ plan, fees, onChange, onDelete }: { plan: TreatmentPlanRow; fees: FeeRow[]; onChange: () => void; onDelete: () => void }) {
+function PlanCard({ plan, fees, patientName, onChange, onDelete }: { plan: TreatmentPlanRow; fees: FeeRow[]; patientName: string; onChange: () => void; onDelete: () => void }) {
   const [open, setOpen] = useState(true);
   const [items, setItems] = useState<TreatmentPlanItemRow[]>([]);
   const [title, setTitle] = useState(plan.title);
   const [status, setStatus] = useState(plan.status);
+  const [explainOpen, setExplainOpen] = useState(false);
   useEffect(() => { listItems(plan.id).then(setItems).catch(() => {}); }, [plan.id]);
+
 
   const totals = useMemo(() => planTotals(items), [items]);
   const grouped = useMemo(() => {
@@ -126,11 +130,30 @@ function PlanCard({ plan, fees, onChange, onDelete }: { plan: TreatmentPlanRow; 
             {" · "}<span className="text-emerald-700">${totals.completed.toFixed(0)}</span> done
             {" · "}${totals.planned.toFixed(0)} planned
           </div>
+          <button onClick={() => setExplainOpen(true)} disabled={items.length === 0}
+            title="AI plain-language summary for patient"
+            className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:opacity-90 disabled:opacity-40">
+            <Sparkles className="h-3 w-3" /> Explain
+          </button>
           <button onClick={onDelete} className="rounded-full border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive" title="Delete plan">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
+
+      <PlanExplainerDialog
+        open={explainOpen}
+        onClose={() => setExplainOpen(false)}
+        patientName={patientName}
+        items={items.map((it) => ({
+          procedure_code: it.procedure_code,
+          description: it.description,
+          fee: Number(it.fee),
+          tooth_number: it.tooth_number,
+          surfaces: it.surfaces,
+        }))}
+      />
+
 
       {open && (
         <div className="border-t border-border">
