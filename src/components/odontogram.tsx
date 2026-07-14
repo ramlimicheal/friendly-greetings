@@ -177,8 +177,29 @@ function ArchRow({
   );
 }
 
+type ToothType = "incisor" | "canine" | "premolar" | "molar";
+function toothType(num: number, dentition: "permanent" | "primary"): ToothType {
+  const last = num % 10;
+  if (dentition === "primary") {
+    if (last <= 2) return "incisor";
+    if (last === 3) return "canine";
+    return "molar";
+  }
+  if (last <= 2) return "incisor";
+  if (last === 3) return "canine";
+  if (last <= 5) return "premolar";
+  return "molar";
+}
+
+const TOOTH_SHAPES: Record<ToothType, string> = {
+  molar:    "M8,10 Q8,4 14,4 L26,4 Q32,4 32,10 Q34,14 34,20 Q34,26 32,30 Q32,36 26,36 L14,36 Q8,36 8,30 Q6,26 6,20 Q6,14 8,10 Z",
+  premolar: "M11,12 Q11,5 20,5 Q29,5 29,12 Q31,16 31,20 Q31,26 29,30 Q28,35 20,35 Q12,35 11,30 Q9,26 9,20 Q9,16 11,12 Z",
+  canine:   "M20,3 Q26,4 29,12 Q32,18 31,24 Q30,32 26,35 Q20,38 14,35 Q10,32 9,24 Q8,18 11,12 Q14,4 20,3 Z",
+  incisor:  "M13,5 Q20,3 27,5 Q30,14 30,22 Q30,30 27,34 Q20,37 13,34 Q10,30 10,22 Q10,14 13,5 Z",
+};
+
 function ToothCell({
-  num, row, selected, saving, onSelect, onSurfaceClick,
+  num, row, selected, saving, onSelect, onSurfaceClick, dentition,
 }: {
   num: number;
   row?: ToothChartRow;
@@ -186,6 +207,7 @@ function ToothCell({
   saving: boolean;
   onSelect: () => void;
   onSurfaceClick: (s: SurfaceKey) => void;
+  dentition: "permanent" | "primary";
 }) {
   const cond = (row?.tooth_condition ?? "present") as ToothCondition;
   const outline = toothColor(cond);
@@ -197,6 +219,13 @@ function ToothCell({
     occlusal: surfaceColor((row?.surface_occlusal ?? "sound") as SurfaceCondition),
   };
   const missing = cond === "missing";
+  const type = toothType(num, dentition);
+  const shape = TOOTH_SHAPES[type];
+  const clipId = `tc-${num}`;
+  const centerEl = type === "incisor" || type === "canine"
+    ? <ellipse cx="20" cy="20" rx="6" ry="10" fill={surfaces.occlusal} onClick={() => onSurfaceClick("occlusal")} style={{ cursor: "pointer" }} />
+    : <ellipse cx="20" cy="20" rx="8" ry="8" fill={surfaces.occlusal} onClick={() => onSurfaceClick("occlusal")} style={{ cursor: "pointer" }} />;
+
   return (
     <div className={"flex flex-col items-center gap-1 rounded-md p-1 transition " + (selected ? "bg-primary/10 ring-1 ring-primary" : "")}>
       <button onClick={onSelect} className="text-[10px] font-semibold text-muted-foreground hover:text-foreground">
@@ -205,29 +234,68 @@ function ToothCell({
       <div className="relative">
         <svg
           viewBox="0 0 40 40"
-          className={"h-11 w-11 " + (missing ? "opacity-40" : "")}
+          className={"h-12 w-11 drop-shadow-sm " + (missing ? "opacity-40" : "")}
           style={{ filter: saving ? "opacity(0.6)" : undefined }}
         >
-          {/* Frame */}
-          <rect x="2" y="2" width="36" height="36" rx="6" fill={outline} stroke="#94a3b8" strokeWidth="1" />
-          {/* Occlusal (center) */}
-          <rect x="14" y="14" width="12" height="12" fill={surfaces.occlusal} stroke="#94a3b8" strokeWidth="0.5"
-            style={{ cursor: "pointer" }} onClick={() => onSurfaceClick("occlusal")} />
-          {/* Buccal (top) */}
-          <polygon points="2,2 38,2 26,14 14,14" fill={surfaces.buccal} stroke="#94a3b8" strokeWidth="0.5"
-            style={{ cursor: "pointer" }} onClick={() => onSurfaceClick("buccal")} />
-          {/* Lingual (bottom) */}
-          <polygon points="14,26 26,26 38,38 2,38" fill={surfaces.lingual} stroke="#94a3b8" strokeWidth="0.5"
-            style={{ cursor: "pointer" }} onClick={() => onSurfaceClick("lingual")} />
-          {/* Mesial (left) */}
-          <polygon points="2,2 14,14 14,26 2,38" fill={surfaces.mesial} stroke="#94a3b8" strokeWidth="0.5"
-            style={{ cursor: "pointer" }} onClick={() => onSurfaceClick("mesial")} />
-          {/* Distal (right) */}
-          <polygon points="38,2 38,38 26,26 26,14" fill={surfaces.distal} stroke="#94a3b8" strokeWidth="0.5"
-            style={{ cursor: "pointer" }} onClick={() => onSurfaceClick("distal")} />
+          <defs>
+            <clipPath id={clipId}>
+              <path d={shape} />
+            </clipPath>
+            <radialGradient id={`sheen-${num}`} cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
+              <stop offset="60%" stopColor="#ffffff" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+
+          <path d={shape} fill={outline} />
+
+          <g clipPath={`url(#${clipId})`}>
+            <rect x="0" y="0" width="40" height="12" fill={surfaces.buccal}
+              onClick={() => onSurfaceClick("buccal")} style={{ cursor: "pointer" }} />
+            <rect x="0" y="28" width="40" height="12" fill={surfaces.lingual}
+              onClick={() => onSurfaceClick("lingual")} style={{ cursor: "pointer" }} />
+            <rect x="0" y="8" width="10" height="24" fill={surfaces.mesial}
+              onClick={() => onSurfaceClick("mesial")} style={{ cursor: "pointer" }} />
+            <rect x="30" y="8" width="10" height="24" fill={surfaces.distal}
+              onClick={() => onSurfaceClick("distal")} style={{ cursor: "pointer" }} />
+            {centerEl}
+
+            <g pointerEvents="none" stroke="#64748b" strokeWidth="0.4" fill="none" opacity="0.55">
+              {type === "molar" && (
+                <>
+                  <path d="M14,20 L26,20" />
+                  <path d="M20,14 L20,26" />
+                  <circle cx="14" cy="14" r="1.4" fill="#cbd5e1" stroke="none" />
+                  <circle cx="26" cy="14" r="1.4" fill="#cbd5e1" stroke="none" />
+                  <circle cx="14" cy="26" r="1.4" fill="#cbd5e1" stroke="none" />
+                  <circle cx="26" cy="26" r="1.4" fill="#cbd5e1" stroke="none" />
+                </>
+              )}
+              {type === "premolar" && (
+                <>
+                  <path d="M20,12 L20,28" />
+                  <circle cx="20" cy="15" r="1.3" fill="#cbd5e1" stroke="none" />
+                  <circle cx="20" cy="25" r="1.3" fill="#cbd5e1" stroke="none" />
+                </>
+              )}
+              {type === "canine" && (
+                <path d="M20,10 L20,30" />
+              )}
+              {type === "incisor" && (
+                <path d="M13,20 Q20,22 27,20" />
+              )}
+            </g>
+
+            <path d={shape} fill={`url(#sheen-${num})`} pointerEvents="none" />
+          </g>
+
+          <path d={shape} fill="none" stroke="#64748b" strokeWidth="1" strokeLinejoin="round" />
+
           {cond === "missing" && <line x1="4" y1="4" x2="36" y2="36" stroke="#dc2626" strokeWidth="2" />}
           {cond === "extract_planned" && <line x1="4" y1="36" x2="36" y2="4" stroke="#f97316" strokeWidth="2" />}
         </svg>
+
       </div>
     </div>
   );
