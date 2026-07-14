@@ -72,6 +72,9 @@ export async function listAppointmentHistory(days = 180): Promise<{ patient_id: 
     .lte("start_at", new Date().toISOString());
   if (error) throw error;
   return (data ?? []) as any;
+}
+
+
 
 
 export async function createAppointment(input: AppointmentInsert): Promise<AppointmentRow> {
