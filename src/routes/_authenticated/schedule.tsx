@@ -69,8 +69,12 @@ function SchedulePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await listAppointmentsForRange(from, to);
-      setItems(data);
+      const [appts, wl] = await Promise.all([
+        listAppointmentsForRange(from, to),
+        listWaitlist("active"),
+      ]);
+      setItems(appts);
+      setWaitlist(wl);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load appointments");
@@ -84,27 +88,22 @@ function SchedulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from.getTime(), to.getTime()]);
 
-  // Realtime — reload on any change to today's window
   useEffect(() => {
     const channel = supabase
       .channel(`appts-${from.toISOString()}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "appointments" },
-        () => load(),
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "waitlist" }, () => load())
       .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from.getTime()]);
 
-  const hours = Array.from({ length: 10 }, (_, i) => i + 8); // 8–17
+  const hours = Array.from({ length: 10 }, (_, i) => i + 8);
   const hourH = 60;
 
   const openNew = (chair?: number, hour?: number) => {
     setEditing(null);
+    setPrefill(undefined);
     if (hour != null) {
       const d = new Date(date);
       d.setHours(hour, 0, 0, 0);
@@ -116,8 +115,29 @@ function SchedulePage() {
     setDialogOpen(true);
   };
 
+  const openFromWaitlist = (w: WaitlistWithPatient, chair?: number, hour?: number) => {
+    setEditing(null);
+    setWaitlistFill(w);
+    setPrefill({
+      patient_id: w.patient_id,
+      procedure: w.procedure,
+      provider: w.preferred_provider ?? "",
+      duration_min: w.duration_min,
+    });
+    if (hour != null) {
+      const d = new Date(date);
+      d.setHours(hour, 0, 0, 0);
+      setDefaultStart(d);
+    } else {
+      setDefaultStart(undefined);
+    }
+    setDefaultChair(chair ?? w.preferred_chair ?? undefined);
+    setDialogOpen(true);
+  };
+
   const openEdit = (a: AppointmentWithPatient) => {
     setEditing(a);
+    setPrefill(undefined);
     setDefaultStart(undefined);
     setDefaultChair(undefined);
     setDialogOpen(true);
@@ -125,9 +145,27 @@ function SchedulePage() {
 
   const submit = async (values: AppointmentInsert) => {
     if (editing) {
+      const prevStatus = editing.status;
       await updateAppointment(editing.id, values);
+      // Auto-fill: if we just cancelled/no-showed an appointment, prompt waitlist
+      if (prevStatus !== values.status && (values.status === "cancelled" || values.status === "no-show")) {
+        const match = waitlist.find((w) => w.duration_min <= editing.duration_min &&
+          (!w.preferred_provider || w.preferred_provider === editing.provider) &&
+          (!w.preferred_chair || w.preferred_chair === editing.chair));
+        if (match) {
+          setTimeout(() => {
+            if (confirm(`Slot freed! Book "${match.patient_name}" (P${match.priority} · ${match.procedure}) into this ${editing.duration_min}-min slot?`)) {
+              openFromWaitlist(match, editing.chair, new Date(editing.start_at).getHours());
+            }
+          }, 100);
+        }
+      }
     } else {
       await createAppointment(values);
+      if (waitlistFill) {
+        await markWaitlistScheduled(waitlistFill.id);
+        setWaitlistFill(null);
+      }
     }
     await load();
   };
@@ -135,6 +173,29 @@ function SchedulePage() {
   const remove = async () => {
     if (!editing) return;
     await deleteAppointment(editing.id);
+    await load();
+  };
+
+  const onDropAt = async (chair: number, hour: number, minute: number) => {
+    const id = dragId.current;
+    dragId.current = null;
+    if (!id) return;
+    const appt = items.find((a) => a.id === id);
+    if (!appt) return;
+    const newStart = new Date(date);
+    newStart.setHours(hour, minute, 0, 0);
+    // Same slot? no-op
+    const cur = new Date(appt.start_at);
+    if (cur.getHours() === hour && cur.getMinutes() === minute && appt.chair === chair) return;
+    setDragMsg(null);
+    const res = await rescheduleAppointment(appt, chair, newStart);
+    if (!res.ok) {
+      const c = res.conflicts[0];
+      const t = new Date(c.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+      setDragMsg(`Can't move: ${c.conflict_type} conflict at ${t}.`);
+      setTimeout(() => setDragMsg(null), 3500);
+      return;
+    }
     await load();
   };
 
