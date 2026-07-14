@@ -241,12 +241,23 @@ export function IconButton({
 export function PrimaryButton({
   children,
   icon: Icon,
+  onClick,
+  type = "button",
+  disabled,
 }: {
   children: ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
+  onClick?: () => void;
+  type?: "button" | "submit";
+  disabled?: boolean;
 }) {
   return (
-    <button className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90">
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+    >
       {Icon ? <Icon className="h-4 w-4" /> : null}
       {children}
     </button>
@@ -256,17 +267,29 @@ export function PrimaryButton({
 export function GhostButton({
   children,
   icon: Icon,
+  onClick,
+  type = "button",
+  disabled,
 }: {
   children: ReactNode;
   icon?: React.ComponentType<{ className?: string }>;
+  onClick?: () => void;
+  type?: "button" | "submit";
+  disabled?: boolean;
 }) {
   return (
-    <button className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted">
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-60"
+    >
       {Icon ? <Icon className="h-4 w-4" /> : null}
       {children}
     </button>
   );
 }
+
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Admin",
