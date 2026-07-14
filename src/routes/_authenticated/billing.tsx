@@ -262,7 +262,14 @@ function BillingPage() {
         }}
         onDelete={claimDialog.editing ? async () => { await deleteClaim(claimDialog.editing.id); invalidate(); } : undefined}
       />
+
+      <BenefitsExtractorDialog
+        open={aiOpen}
+        onClose={() => setAiOpen(false)}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["insurance_plans"] })}
+      />
     </AppShell>
+
   );
 }
 
