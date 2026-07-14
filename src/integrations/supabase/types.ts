@@ -97,6 +97,94 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_requests: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          full_name: string
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          is_new_patient: boolean
+          notes: string | null
+          patient_id: string | null
+          phone: string
+          preferred_date: string
+          preferred_provider: string | null
+          preferred_time: string
+          reason: string | null
+          service_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          full_name: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          is_new_patient?: boolean
+          notes?: string | null
+          patient_id?: string | null
+          phone: string
+          preferred_date: string
+          preferred_provider?: string | null
+          preferred_time: string
+          reason?: string | null
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          full_name?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          is_new_patient?: boolean
+          notes?: string | null
+          patient_id?: string | null
+          phone?: string
+          preferred_date?: string
+          preferred_provider?: string | null
+          preferred_time?: string
+          reason?: string | null
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_requests_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_requests_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinical_notes: {
         Row: {
           assessment: string | null
@@ -182,6 +270,105 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      intake_forms: {
+        Row: {
+          address: string | null
+          allergies: string[]
+          booking_request_id: string | null
+          consent_privacy: boolean
+          consent_treatment: boolean
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string
+          id: string
+          insurance_carrier: string | null
+          insurance_group: string | null
+          insurance_member_id: string | null
+          medical_conditions: string[]
+          medications: string[]
+          patient_id: string | null
+          phone: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signature: string | null
+          signed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          allergies?: string[]
+          booking_request_id?: string | null
+          consent_privacy?: boolean
+          consent_treatment?: boolean
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name: string
+          id?: string
+          insurance_carrier?: string | null
+          insurance_group?: string | null
+          insurance_member_id?: string | null
+          medical_conditions?: string[]
+          medications?: string[]
+          patient_id?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signature?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          allergies?: string[]
+          booking_request_id?: string | null
+          consent_privacy?: boolean
+          consent_treatment?: boolean
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string
+          id?: string
+          insurance_carrier?: string | null
+          insurance_group?: string | null
+          insurance_member_id?: string | null
+          medical_conditions?: string[]
+          medications?: string[]
+          patient_id?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signature?: string | null
+          signed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intake_forms_booking_request_id_fkey"
+            columns: ["booking_request_id"]
+            isOneToOne: false
+            referencedRelation: "booking_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intake_forms_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invitations: {
         Row: {
@@ -364,6 +551,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      services: {
+        Row: {
+          active: boolean
+          created_at: string
+          default_provider: string | null
+          description: string | null
+          duration_min: number
+          id: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          default_provider?: string | null
+          description?: string | null
+          duration_min?: number
+          id?: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          default_provider?: string | null
+          description?: string | null
+          duration_min?: number
+          id?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       tooth_charts: {
         Row: {
