@@ -130,11 +130,30 @@ function PlanCard({ plan, fees, patientName, onChange, onDelete }: { plan: Treat
             {" · "}<span className="text-emerald-700">${totals.completed.toFixed(0)}</span> done
             {" · "}${totals.planned.toFixed(0)} planned
           </div>
+          <button onClick={() => setExplainOpen(true)} disabled={items.length === 0}
+            title="AI plain-language summary for patient"
+            className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:opacity-90 disabled:opacity-40">
+            <Sparkles className="h-3 w-3" /> Explain
+          </button>
           <button onClick={onDelete} className="rounded-full border border-border p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive" title="Delete plan">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
+
+      <PlanExplainerDialog
+        open={explainOpen}
+        onClose={() => setExplainOpen(false)}
+        patientName={patientName}
+        items={items.map((it) => ({
+          procedure_code: it.procedure_code,
+          description: it.description,
+          fee: Number(it.fee),
+          tooth_number: it.tooth_number,
+          surfaces: it.surfaces,
+        }))}
+      />
+
 
       {open && (
         <div className="border-t border-border">
