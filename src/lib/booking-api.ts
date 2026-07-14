@@ -76,6 +76,7 @@ export async function createPatientFromBooking(b: BookingRequestRow): Promise<st
     email: b.email,
     date_of_birth: b.date_of_birth,
     status: "New" as const,
+    chart_no: "",
     created_by: userRes.user?.id ?? null,
   };
   const { data, error } = await supabase.from("patients").insert(insert).select("id").single();
