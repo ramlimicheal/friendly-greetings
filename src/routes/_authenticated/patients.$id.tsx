@@ -29,6 +29,8 @@ import {
   type PatientRow,
 } from "@/lib/patients-api";
 import { Odontogram } from "@/components/odontogram";
+import { TreatmentPlanPanel } from "@/components/treatment-plan-panel";
+import { ClinicalNotesPanel } from "@/components/clinical-notes-panel";
 
 export const Route = createFileRoute("/_authenticated/patients/$id")({
   head: () => ({
