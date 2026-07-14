@@ -1,172 +1,292 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Plus, Circle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell, Card, GhostButton, PrimaryButton, SectionHeader } from "@/components/app-shell";
-import { todaysAppointments, staff } from "@/lib/mock-data";
+import { AppointmentFormDialog } from "@/components/appointment-form-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  APPOINTMENT_STATUSES,
+  STATUS_LABEL,
+  createAppointment,
+  deleteAppointment,
+  endOfDay,
+  listAppointmentsForRange,
+  startOfDay,
+  updateAppointment,
+  type AppointmentInsert,
+  type AppointmentStatus,
+  type AppointmentWithPatient,
+} from "@/lib/appointments-api";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
     meta: [
       { title: "Schedule — Enamel Dental Clinic" },
-      { name: "description", content: "Chair-by-chair daily and weekly schedule for the whole clinic." },
+      { name: "description", content: "Chair-by-chair daily schedule for the whole clinic, live." },
     ],
   }),
   component: SchedulePage,
 });
 
-const STATUS_TONE: Record<string, string> = {
+const STATUS_TONE: Record<AppointmentStatus, string> = {
+  unconfirmed: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
   confirmed: "bg-primary-soft text-accent-foreground ring-1 ring-primary/20",
   arrived: "bg-primary text-primary-foreground",
   "in-chair": "bg-emerald-500 text-primary-foreground",
-  unconfirmed: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
+  completed: "bg-muted text-muted-foreground ring-1 ring-border",
+  cancelled: "bg-red-100 text-red-700 line-through",
+  "no-show": "bg-red-100 text-red-700",
+};
+
+const CHAIRS = [1, 2, 3, 4] as const;
+const CHAIR_MEANING: Record<number, string> = {
+  1: "Hygiene",
+  2: "Restorative",
+  3: "Surgical",
+  4: "Perio",
 };
 
 function SchedulePage() {
+  const [date, setDate] = useState<Date>(() => new Date());
+  const [items, setItems] = useState<AppointmentWithPatient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<AppointmentWithPatient | null>(null);
+  const [defaultStart, setDefaultStart] = useState<Date | undefined>();
+  const [defaultChair, setDefaultChair] = useState<number | undefined>();
+
+  const from = useMemo(() => startOfDay(date), [date]);
+  const to = useMemo(() => endOfDay(date), [date]);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await listAppointmentsForRange(from, to);
+      setItems(data);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load appointments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from.getTime(), to.getTime()]);
+
+  // Realtime — reload on any change to today's window
+  useEffect(() => {
+    const channel = supabase
+      .channel(`appts-${from.toISOString()}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "appointments" },
+        () => load(),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from.getTime()]);
+
   const hours = Array.from({ length: 10 }, (_, i) => i + 8); // 8–17
-  const chairs = [1, 2, 3, 4] as const;
   const hourH = 60;
+
+  const openNew = (chair?: number, hour?: number) => {
+    setEditing(null);
+    if (hour != null) {
+      const d = new Date(date);
+      d.setHours(hour, 0, 0, 0);
+      setDefaultStart(d);
+    } else {
+      setDefaultStart(undefined);
+    }
+    setDefaultChair(chair);
+    setDialogOpen(true);
+  };
+
+  const openEdit = (a: AppointmentWithPatient) => {
+    setEditing(a);
+    setDefaultStart(undefined);
+    setDefaultChair(undefined);
+    setDialogOpen(true);
+  };
+
+  const submit = async (values: AppointmentInsert) => {
+    if (editing) {
+      await updateAppointment(editing.id, values);
+    } else {
+      await createAppointment(values);
+    }
+    await load();
+  };
+
+  const remove = async () => {
+    if (!editing) return;
+    await deleteAppointment(editing.id);
+    await load();
+  };
+
+  const prev = () => shiftDate(-1);
+  const next = () => shiftDate(1);
+  const today = () => setDate(new Date());
+  function shiftDate(days: number) {
+    const d = new Date(date);
+    d.setDate(d.getDate() + days);
+    setDate(d);
+  }
 
   return (
     <AppShell
       title="Schedule"
-      subtitle="Tuesday, October 14, 2025 · 4 chairs · Day view"
+      subtitle={`${date.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" })} · ${CHAIRS.length} chairs · Day view`}
       actions={
         <>
           <div className="flex items-center gap-1">
-            <button className="rounded-full border border-border p-2 hover:bg-muted"><ChevronLeft className="h-4 w-4" /></button>
-            <GhostButton>Today</GhostButton>
-            <button className="rounded-full border border-border p-2 hover:bg-muted"><ChevronRight className="h-4 w-4" /></button>
+            <button onClick={prev} className="rounded-full border border-border p-2 hover:bg-muted" aria-label="Previous day"><ChevronLeft className="h-4 w-4" /></button>
+            <GhostButton onClick={today}>Today</GhostButton>
+            <button onClick={next} className="rounded-full border border-border p-2 hover:bg-muted" aria-label="Next day"><ChevronRight className="h-4 w-4" /></button>
           </div>
-          <div className="flex items-center gap-1 rounded-full bg-muted p-1">
-            {["Day", "Week", "Month"].map((v, i) => (
-              <button key={v} className={"rounded-full px-3 py-1.5 text-xs font-medium " + (i === 0 ? "bg-card" : "text-muted-foreground")}>{v}</button>
-            ))}
-          </div>
-          <PrimaryButton icon={Plus}>New appointment</PrimaryButton>
+          <PrimaryButton icon={Plus} onClick={() => openNew()}>New appointment</PrimaryButton>
         </>
       }
     >
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]">
         <Card className="!p-0 overflow-hidden">
+          {error && (
+            <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">{error}</div>
+          )}
           <div className="overflow-x-auto">
             <div className="relative min-w-[640px]">
-              <div className="grid" style={{ gridTemplateColumns: `72px repeat(${chairs.length}, minmax(140px, 1fr))` }}>
+              <div className="grid" style={{ gridTemplateColumns: `72px repeat(${CHAIRS.length}, minmax(140px, 1fr))` }}>
                 <div />
-                {chairs.map((c) => (
+                {CHAIRS.map((c) => (
                   <div key={c} className="border-l border-border bg-muted/40 px-3 py-3">
                     <div className="flex items-center gap-2 text-sm font-semibold">
                       <Circle className="h-2 w-2 fill-primary text-primary" /> Chair {c}
                     </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {c === 1 && "Hygiene · Nadia"}
-                      {c === 2 && "Restorative · Dr. Rina"}
-                      {c === 3 && "Surgical · Dr. Kai"}
-                      {c === 4 && "Perio · Leo"}
-                    </div>
+                    <div className="text-[11px] text-muted-foreground">{CHAIR_MEANING[c]}</div>
                   </div>
                 ))}
 
-                {/* time rows */}
                 {hours.map((h) => (
                   <div key={h} className="contents">
                     <div className="border-t border-border px-2 py-1 text-right text-[11px] font-medium text-muted-foreground" style={{ height: hourH }}>
                       {h}:00
                     </div>
-                    {chairs.map((c) => (
-                      <div key={c} className="relative border-l border-t border-border" style={{ height: hourH }}>
-                        {/* half-hour line */}
-                        <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
-                      </div>
+                    {CHAIRS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => openNew(c, h)}
+                        className="relative border-l border-t border-border transition hover:bg-primary-soft/40"
+                        style={{ height: hourH }}
+                        aria-label={`New at ${h}:00 chair ${c}`}
+                      >
+                        <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
+                      </button>
                     ))}
                   </div>
                 ))}
               </div>
 
-              {/* absolutely positioned appointments layer */}
+              {/* appointments layer */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ height: hours.length * hourH }}>
-                <div className="grid h-full" style={{ gridTemplateColumns: `72px repeat(${chairs.length}, minmax(140px, 1fr))` }}>
+                <div className="grid h-full" style={{ gridTemplateColumns: `72px repeat(${CHAIRS.length}, minmax(140px, 1fr))` }}>
                   <div />
-                  {chairs.map((c) => (
+                  {CHAIRS.map((c) => (
                     <div key={c} className="relative">
-                      {todaysAppointments.filter((a) => a.chair === c).map((a) => {
-                        const [hh, mm] = a.start.split(":").map(Number);
-                        const top = ((hh - 8) * 60 + mm) * (hourH / 60);
-                        const height = a.duration * (hourH / 60);
-                        return (
-                          <div
-                            key={a.id}
-                            className={"pointer-events-auto absolute left-1 right-1 rounded-xl px-2 py-1.5 text-[11px] " + STATUS_TONE[a.status]}
-                            style={{ top, height: height - 3 }}
-                          >
-                            <div className="font-semibold">{a.start} · {a.patient}</div>
-                            <div className="opacity-80">{a.procedure}</div>
-                            <div className="mt-0.5 text-[10px] opacity-70">{a.provider}</div>
-                          </div>
-                        );
-                      })}
+                      {items
+                        .filter((a) => a.chair === c)
+                        .map((a) => {
+                          const d = new Date(a.start_at);
+                          const startMins = d.getHours() * 60 + d.getMinutes();
+                          const top = ((startMins - 8 * 60) / 60) * hourH;
+                          const height = (a.duration_min / 60) * hourH;
+                          if (top < 0 || top > hours.length * hourH) return null;
+                          return (
+                            <button
+                              key={a.id}
+                              type="button"
+                              onClick={() => openEdit(a)}
+                              className={
+                                "pointer-events-auto absolute left-1 right-1 rounded-xl px-2 py-1.5 text-left text-[11px] transition hover:brightness-95 " +
+                                STATUS_TONE[a.status]
+                              }
+                              style={{ top, height: Math.max(height - 3, 20) }}
+                              title={`${a.patient_name} — ${a.procedure}`}
+                            >
+                              <div className="truncate font-semibold">
+                                {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                              </div>
+                              <div className="truncate opacity-80">{a.procedure}</div>
+                              <div className="mt-0.5 truncate text-[10px] opacity-70">{a.provider}</div>
+                            </button>
+                          );
+                        })}
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           </div>
+          {loading && items.length === 0 && (
+            <div className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">Loading…</div>
+          )}
+          {!loading && items.length === 0 && (
+            <div className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
+              No appointments for this day — click any empty slot to book.
+            </div>
+          )}
         </Card>
-
 
         <div className="space-y-4">
           <Card>
             <SectionHeader title="Legend" />
             <ul className="space-y-2 text-sm">
-              {[
-                { k: "confirmed", label: "Confirmed" },
-                { k: "arrived", label: "Arrived" },
-                { k: "in-chair", label: "In chair" },
-                { k: "unconfirmed", label: "Needs confirmation" },
-              ].map((l) => (
-                <li key={l.k} className="flex items-center gap-2">
-                  <span className={"h-3 w-6 rounded-md " + STATUS_TONE[l.k]} />
-                  <span>{l.label}</span>
+              {APPOINTMENT_STATUSES.map((s) => (
+                <li key={s} className="flex items-center gap-2">
+                  <span className={"h-3 w-6 rounded-md " + STATUS_TONE[s]} />
+                  <span>{STATUS_LABEL[s]}</span>
                 </li>
               ))}
             </ul>
           </Card>
 
           <Card>
-            <SectionHeader title="On the floor" />
-            <ul className="space-y-3">
-              {staff.map((s) => (
-                <li key={s.id} className="flex items-center gap-3">
-                  <span className={"flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-primary-foreground " + s.color}>
-                    {s.initials}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium">{s.name}</div>
-                    <div className="text-xs text-muted-foreground">{s.role}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          <Card>
-            <SectionHeader title="Waitlist" />
-            <ul className="space-y-2">
-              {[
-                { n: "Grace Lin", need: "Cleaning · any afternoon" },
-                { n: "David Osei", need: "Emergency · today" },
-                { n: "Mia Petrov", need: "Whitening delivery" },
-              ].map((w) => (
-                <li key={w.n} className="flex items-center justify-between rounded-2xl bg-muted/60 px-3 py-2.5">
-                  <div>
-                    <div className="text-sm font-medium">{w.n}</div>
-                    <div className="text-xs text-muted-foreground">{w.need}</div>
-                  </div>
-                  <button className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:opacity-90">Slot in</button>
-                </li>
-              ))}
+            <SectionHeader title="Day summary" />
+            <ul className="space-y-2 text-sm">
+              <SummaryRow label="Booked" value={items.length} />
+              <SummaryRow label="Arrived" value={items.filter((a) => a.status === "arrived" || a.status === "in-chair" || a.status === "completed").length} />
+              <SummaryRow label="Unconfirmed" value={items.filter((a) => a.status === "unconfirmed").length} />
+              <SummaryRow label="Cancelled" value={items.filter((a) => a.status === "cancelled" || a.status === "no-show").length} />
             </ul>
           </Card>
         </div>
       </div>
+
+      <AppointmentFormDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onSubmit={submit}
+        onDelete={editing ? remove : undefined}
+        initial={editing}
+        defaultStart={defaultStart}
+        defaultChair={defaultChair}
+      />
     </AppShell>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: number }) {
+  return (
+    <li className="flex items-center justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold">{value}</span>
+    </li>
   );
 }
