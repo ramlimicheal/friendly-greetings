@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Share2,
@@ -27,6 +27,14 @@ import {
   invoices,
   inventory,
 } from "@/lib/mock-data";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  endOfDay,
+  listAppointmentsForRange,
+  startOfDay,
+  type AppointmentWithPatient,
+} from "@/lib/appointments-api";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
