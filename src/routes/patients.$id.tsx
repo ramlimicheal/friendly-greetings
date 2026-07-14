@@ -216,7 +216,7 @@ function OdontogramTab() {
 
       <div className="rounded-2xl bg-muted/40 p-4">
         <div className="text-center text-[11px] uppercase tracking-wider text-muted-foreground">Upper — Right to Left</div>
-        <div className="mt-2 grid grid-cols-16 gap-1.5">
+        <div className="mt-2 grid gap-1.5" style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}>
           {upper.map((n) => (
             <Tooth key={n} num={n} condition={toothChart[n] ?? "healthy"} selected={selected === n} onSelect={setSelected} orient="upper" />
           ))}
@@ -224,7 +224,7 @@ function OdontogramTab() {
 
         <div className="my-4 h-px bg-border" />
 
-        <div className="grid grid-cols-16 gap-1.5">
+        <div className="grid gap-1.5" style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}>
           {lower.map((n) => (
             <Tooth key={n} num={n} condition={toothChart[n] ?? "healthy"} selected={selected === n} onSelect={setSelected} orient="lower" />
           ))}
