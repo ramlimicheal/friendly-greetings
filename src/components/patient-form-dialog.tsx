@@ -57,10 +57,10 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
     setBusy(true);
     setError(null);
     try {
-      const allergies = allergiesInput
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const toArr = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
+      const allergies = toArr(allergiesInput);
+      const medical_conditions = toArr(conditionsInput);
+      const medications = toArr(medicationsInput);
       const payload = {
         full_name,
         date_of_birth: date_of_birth || null,
@@ -73,6 +73,8 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
         address: address || null,
         notes: notes || null,
         allergies,
+        medical_conditions,
+        medications,
         ...(chart_no ? { chart_no } : {}),
       } as PatientInsert;
 
