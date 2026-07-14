@@ -62,6 +62,18 @@ export async function listAppointmentsForRange(from: Date, to: Date): Promise<Ap
   });
 }
 
+/** Compact history for no-show risk scoring. */
+export async function listAppointmentHistory(days = 180): Promise<{ patient_id: string; start_at: string; status: AppointmentStatus }[]> {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("patient_id, start_at, status")
+    .gte("start_at", since)
+    .lte("start_at", new Date().toISOString());
+  if (error) throw error;
+  return (data ?? []) as any;
+
+
 export async function createAppointment(input: AppointmentInsert): Promise<AppointmentRow> {
   const { data: userRes } = await supabase.auth.getUser();
   const payload: AppointmentInsert = { ...input, created_by: userRes.user?.id ?? null };
