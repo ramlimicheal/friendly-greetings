@@ -116,6 +116,7 @@ function PatientDetail() {
         </>
       }
     >
+      <MedicalAlertBanner patient={patient} />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr]">
         {/* left rail */}
         <div className="space-y-4">
