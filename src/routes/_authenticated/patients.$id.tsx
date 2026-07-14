@@ -195,8 +195,8 @@ function PatientDetail() {
             <div className="p-6">
               {tab === "overview" && <OverviewTab patient={patient} />}
               {tab === "chart" && <Odontogram patientId={patient.id} />}
-              {tab === "plan" && <ComingSoon what="Treatment plan" />}
-              {tab === "history" && <ComingSoon what="Clinical history" />}
+              {tab === "plan" && <TreatmentPlanPanel patientId={patient.id} />}
+              {tab === "history" && <ClinicalNotesPanel patientId={patient.id} />}
               {tab === "billing" && <ComingSoon what="Billing" />}
             </div>
           </Card>
