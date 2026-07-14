@@ -9,6 +9,13 @@ import {
   type AppointmentStatus,
 } from "@/lib/appointments-api";
 
+type Prefill = {
+  patient_id?: string;
+  procedure?: string;
+  provider?: string;
+  duration_min?: number;
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -17,6 +24,7 @@ type Props = {
   initial?: AppointmentRow | null;
   defaultStart?: Date;
   defaultChair?: number;
+  prefill?: Prefill;
 };
 
 const DURATIONS = [15, 30, 45, 60, 75, 90, 120];
