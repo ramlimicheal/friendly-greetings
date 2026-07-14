@@ -121,7 +121,7 @@ function DashboardPage() {
       </section>
 
       {/* MID ROW — live schedule + right-now snapshot */}
-      <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_380px]">
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <TodayScheduleStrip nowMins={nowMins} />
         <RightNowSnapshot nowMins={nowMins} />
       </section>
