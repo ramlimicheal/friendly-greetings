@@ -100,11 +100,15 @@ function BillingPage() {
       subtitle="Invoices, payments, insurance claims, and receivables"
       actions={
         <>
+          <button onClick={() => setAiOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3.5 py-2 text-xs font-semibold text-white hover:opacity-90">
+            <Sparkles className="h-3.5 w-3.5" /> AI benefits
+          </button>
           <GhostButton icon={Wallet} onClick={() => setPayDialog({ open: true })}>Record payment</GhostButton>
           <GhostButton icon={FileText} onClick={() => setClaimDialog({ open: true })}>New claim</GhostButton>
           <PrimaryButton icon={Plus} onClick={() => setInvoiceDialog({ open: true })}>New invoice</PrimaryButton>
         </>
       }
+
     >
       {/* Summary */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-4">
