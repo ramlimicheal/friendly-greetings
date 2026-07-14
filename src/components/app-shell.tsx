@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Search,
   Plus,
+  HelpCircle,
+  Command,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
