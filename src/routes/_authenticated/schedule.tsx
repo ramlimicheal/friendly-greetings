@@ -228,6 +228,9 @@ function SchedulePage() {
           {error && (
             <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">{error}</div>
           )}
+          {dragMsg && (
+            <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-800">⚠️ {dragMsg}</div>
+          )}
           <div className="overflow-x-auto">
             <div className="relative min-w-[640px]">
               <div className="grid" style={{ gridTemplateColumns: `72px repeat(${CHAIRS.length}, minmax(140px, 1fr))` }}>
@@ -247,55 +250,74 @@ function SchedulePage() {
                       {h}:00
                     </div>
                     {CHAIRS.map((c) => (
-                      <button
+                      <div
                         key={c}
-                        type="button"
-                        onClick={() => openNew(c, h)}
-                        className="relative border-l border-t border-border transition hover:bg-primary-soft/40"
+                        className="relative border-l border-t border-border"
                         style={{ height: hourH }}
-                        aria-label={`New at ${h}:00 chair ${c}`}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-primary-soft/60"); }}
+                        onDragLeave={(e) => e.currentTarget.classList.remove("bg-primary-soft/60")}
+                        onDrop={(e) => {
+                          e.currentTarget.classList.remove("bg-primary-soft/60");
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const y = e.clientY - rect.top;
+                          const minute = y < hourH / 2 ? 0 : 30;
+                          onDropAt(c, h, minute);
+                        }}
                       >
-                        <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => openNew(c, h)}
+                          className="absolute inset-0 w-full transition hover:bg-primary-soft/40"
+                          aria-label={`New at ${h}:00 chair ${c}`}
+                        >
+                          <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 ))}
               </div>
 
-              {/* appointments layer */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ height: hours.length * hourH }}>
                 <div className="grid h-full" style={{ gridTemplateColumns: `72px repeat(${CHAIRS.length}, minmax(140px, 1fr))` }}>
                   <div />
                   {CHAIRS.map((c) => (
                     <div key={c} className="relative">
-                      {items
-                        .filter((a) => a.chair === c)
-                        .map((a) => {
-                          const d = new Date(a.start_at);
-                          const startMins = d.getHours() * 60 + d.getMinutes();
-                          const top = ((startMins - 8 * 60) / 60) * hourH;
-                          const height = (a.duration_min / 60) * hourH;
-                          if (top < 0 || top > hours.length * hourH) return null;
-                          return (
-                            <button
-                              key={a.id}
-                              type="button"
-                              onClick={() => openEdit(a)}
-                              className={
-                                "pointer-events-auto absolute left-1 right-1 rounded-xl px-2 py-1.5 text-left text-[11px] transition hover:brightness-95 " +
-                                STATUS_TONE[a.status]
-                              }
-                              style={{ top, height: Math.max(height - 3, 20) }}
-                              title={`${a.patient_name} — ${a.procedure}`}
-                            >
-                              <div className="truncate font-semibold">
-                                {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
-                              </div>
-                              <div className="truncate opacity-80">{a.procedure}</div>
-                              <div className="mt-0.5 truncate text-[10px] opacity-70">{a.provider}</div>
-                            </button>
-                          );
-                        })}
+                      {items.filter((a) => a.chair === c).map((a) => {
+                        const d = new Date(a.start_at);
+                        const startMins = d.getHours() * 60 + d.getMinutes();
+                        const top = ((startMins - 8 * 60) / 60) * hourH;
+                        const height = (a.duration_min / 60) * hourH;
+                        if (top < 0 || top > hours.length * hourH) return null;
+                        const draggable = a.status !== "completed" && a.status !== "cancelled" && a.status !== "no-show";
+                        return (
+                          <div
+                            key={a.id}
+                            draggable={draggable}
+                            onDragStart={(e) => {
+                              dragId.current = a.id;
+                              e.dataTransfer.effectAllowed = "move";
+                              e.dataTransfer.setData("text/plain", a.id);
+                            }}
+                            onClick={() => openEdit(a)}
+                            role="button"
+                            tabIndex={0}
+                            className={
+                              "pointer-events-auto absolute left-1 right-1 rounded-xl px-2 py-1.5 text-left text-[11px] transition hover:brightness-95 " +
+                              (draggable ? "cursor-grab active:cursor-grabbing " : "cursor-pointer ") +
+                              STATUS_TONE[a.status]
+                            }
+                            style={{ top, height: Math.max(height - 3, 20) }}
+                            title={`${a.patient_name} — ${a.procedure}${draggable ? " (drag to reschedule)" : ""}`}
+                          >
+                            <div className="truncate font-semibold">
+                              {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                            </div>
+                            <div className="truncate opacity-80">{a.procedure}</div>
+                            <div className="mt-0.5 truncate text-[10px] opacity-70">{a.provider}</div>
+                          </div>
+                        );
+                      })}
                     </div>
                   ))}
                 </div>
@@ -307,12 +329,42 @@ function SchedulePage() {
           )}
           {!loading && items.length === 0 && (
             <div className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
-              No appointments for this day — click any empty slot to book.
+              No appointments for this day — click any empty slot to book. Drag existing appointments to reschedule.
             </div>
           )}
         </Card>
 
         <div className="space-y-4">
+          <Card>
+            <div className="flex items-center justify-between">
+              <SectionHeader title="Waitlist" />
+              <Link to="/waitlist" className="text-xs font-medium text-primary hover:underline">View all →</Link>
+            </div>
+            {waitlist.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No one waiting. <Link to="/waitlist" className="text-primary hover:underline">Add patients →</Link></p>
+            ) : (
+              <ul className="space-y-2">
+                {waitlist.slice(0, 5).map((w) => (
+                  <li key={w.id}>
+                    <button
+                      onClick={() => openFromWaitlist(w)}
+                      className="w-full rounded-xl border border-border p-2.5 text-left transition hover:border-primary hover:bg-primary-soft/30"
+                    >
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">{w.patient_name}</span>
+                        <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">P{w.priority}</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">{w.procedure} · {w.duration_min} min</div>
+                    </button>
+                  </li>
+                ))}
+                {waitlist.length > 5 && (
+                  <li className="text-center text-[11px] text-muted-foreground">+ {waitlist.length - 5} more</li>
+                )}
+              </ul>
+            )}
+          </Card>
+
           <Card>
             <SectionHeader title="Legend" />
             <ul className="space-y-2 text-sm">
@@ -339,12 +391,13 @@ function SchedulePage() {
 
       <AppointmentFormDialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => { setDialogOpen(false); setWaitlistFill(null); setPrefill(undefined); }}
         onSubmit={submit}
         onDelete={editing ? remove : undefined}
         initial={editing}
         defaultStart={defaultStart}
         defaultChair={defaultChair}
+        prefill={prefill}
       />
     </AppShell>
   );
