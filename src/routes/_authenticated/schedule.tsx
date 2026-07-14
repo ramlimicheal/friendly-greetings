@@ -297,6 +297,8 @@ function SchedulePage() {
                         const height = (a.duration_min / 60) * hourH;
                         if (top < 0 || top > hours.length * hourH) return null;
                         const draggable = a.status !== "completed" && a.status !== "cancelled" && a.status !== "no-show";
+                        const upcoming = a.status !== "completed" && a.status !== "cancelled" && a.status !== "no-show" && d.getTime() >= Date.now() - 3600_000;
+                        const risk = upcoming ? scoreNoShow(a, history) : null;
                         return (
                           <div
                             key={a.id}
@@ -315,16 +317,24 @@ function SchedulePage() {
                               STATUS_TONE[a.status]
                             }
                             style={{ top, height: Math.max(height - 3, 20) }}
-                            title={`${a.patient_name} — ${a.procedure}${draggable ? " (drag to reschedule)" : ""}`}
+                            title={`${a.patient_name} — ${a.procedure}${risk ? `\n${RISK_LABEL[risk.level]} (${risk.score}) — ${risk.reasons.join(", ")}` : ""}${draggable ? "\n(drag to reschedule)" : ""}`}
                           >
-                            <div className="truncate font-semibold">
-                              {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                            <div className="flex items-center justify-between gap-1">
+                              <div className="truncate font-semibold">
+                                {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                              </div>
+                              {risk && risk.level !== "low" && (
+                                <span className={"shrink-0 rounded-full px-1.5 py-0 text-[9px] font-bold uppercase tracking-wide " + RISK_TONE[risk.level]}>
+                                  {risk.level === "high" ? "⚠︎" : "•"} {risk.score}
+                                </span>
+                              )}
                             </div>
                             <div className="truncate opacity-80">{a.procedure}</div>
                             <div className="mt-0.5 truncate text-[10px] opacity-70">{a.provider}</div>
                           </div>
                         );
                       })}
+
                     </div>
                   ))}
                 </div>
