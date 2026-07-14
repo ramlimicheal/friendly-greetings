@@ -188,20 +188,35 @@ export const listAuditLog = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { data, error } = await context.supabase
+    const { data: logs, error } = await context.supabase
       .from("audit_log")
-      .select("*, profiles:user_id(full_name, email)")
+      .select("id, user_id, action, entity_type, entity_id, metadata, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
-    return (data ?? []) as Array<{
+    const rows = (logs ?? []) as Array<{
       id: string;
       user_id: string | null;
       action: string;
       entity_type: string | null;
       entity_id: string | null;
-      metadata: Record<string, unknown>;
+      metadata: unknown;
       created_at: string;
-      profiles: { full_name: string | null; email: string | null } | null;
     }>;
+    const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean))) as string[];
+    let nameMap = new Map<string, { full_name: string | null; email: string | null }>();
+    if (userIds.length > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+      (profs ?? []).forEach((p) => nameMap.set(p.id, { full_name: p.full_name, email: p.email }));
+    }
+    return rows.map((r) => ({
+      ...r,
+      actor_name: r.user_id ? nameMap.get(r.user_id)?.full_name ?? null : null,
+      actor_email: r.user_id ? nameMap.get(r.user_id)?.email ?? null : null,
+    }));
   });
+

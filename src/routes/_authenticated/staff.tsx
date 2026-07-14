@@ -122,10 +122,10 @@ function StaffPage() {
             <h3 className="text-base font-semibold">Recent activity</h3>
           </div>
           <div className="max-h-[560px] space-y-3 overflow-y-auto pr-1">
-            {(auditQ.data ?? []).length === 0 ? (
+            {!auditQ.data || auditQ.data.length === 0 ? (
               <p className="text-xs text-muted-foreground">No activity yet.</p>
             ) : (
-              (auditQ.data ?? []).map((e) => (
+              auditQ.data.map((e) => (
                 <div key={e.id} className="rounded-xl border border-border/70 bg-background/40 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold">{e.action}</span>
@@ -134,13 +134,14 @@ function StaffPage() {
                     </span>
                   </div>
                   <div className="mt-1 text-[11px] text-muted-foreground">
-                    {e.profiles?.full_name ?? e.profiles?.email ?? "system"}
+                    {e.actor_name ?? e.actor_email ?? "system"}
                     {e.entity_type ? ` · ${e.entity_type}` : ""}
                   </div>
                 </div>
               ))
             )}
           </div>
+
         </Card>
       </div>
 

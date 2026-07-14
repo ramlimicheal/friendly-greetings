@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
 import { Route as AuthenticatedTreatmentsRouteImport } from './routes/_authenticated/treatments'
+import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated/staff'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedRecallsRouteImport } from './routes/_authenticated/recalls'
@@ -50,6 +51,11 @@ const AuthenticatedWaitlistRoute = AuthenticatedWaitlistRouteImport.update({
 const AuthenticatedTreatmentsRoute = AuthenticatedTreatmentsRouteImport.update({
   id: '/treatments',
   path: '/treatments',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStaffRoute = AuthenticatedStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/recalls': typeof AuthenticatedRecallsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
+  '/staff': typeof AuthenticatedStaffRoute
   '/treatments': typeof AuthenticatedTreatmentsRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/patients/$id': typeof AuthenticatedPatientsIdRoute
@@ -111,6 +118,7 @@ export interface FileRoutesByTo {
   '/recalls': typeof AuthenticatedRecallsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
+  '/staff': typeof AuthenticatedStaffRoute
   '/treatments': typeof AuthenticatedTreatmentsRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
   '/': typeof AuthenticatedIndexRoute
@@ -127,6 +135,7 @@ export interface FileRoutesById {
   '/_authenticated/recalls': typeof AuthenticatedRecallsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
+  '/_authenticated/staff': typeof AuthenticatedStaffRoute
   '/_authenticated/treatments': typeof AuthenticatedTreatmentsRoute
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/recalls'
     | '/reports'
     | '/schedule'
+    | '/staff'
     | '/treatments'
     | '/waitlist'
     | '/patients/$id'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/recalls'
     | '/reports'
     | '/schedule'
+    | '/staff'
     | '/treatments'
     | '/waitlist'
     | '/'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recalls'
     | '/_authenticated/reports'
     | '/_authenticated/schedule'
+    | '/_authenticated/staff'
     | '/_authenticated/treatments'
     | '/_authenticated/waitlist'
     | '/_authenticated/'
@@ -227,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/treatments'
       fullPath: '/treatments'
       preLoaderRoute: typeof AuthenticatedTreatmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/staff': {
+      id: '/_authenticated/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof AuthenticatedStaffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/schedule': {
@@ -287,6 +306,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRecallsRoute: typeof AuthenticatedRecallsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
+  AuthenticatedStaffRoute: typeof AuthenticatedStaffRoute
   AuthenticatedTreatmentsRoute: typeof AuthenticatedTreatmentsRoute
   AuthenticatedWaitlistRoute: typeof AuthenticatedWaitlistRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -300,6 +320,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRecallsRoute: AuthenticatedRecallsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
+  AuthenticatedStaffRoute: AuthenticatedStaffRoute,
   AuthenticatedTreatmentsRoute: AuthenticatedTreatmentsRoute,
   AuthenticatedWaitlistRoute: AuthenticatedWaitlistRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
