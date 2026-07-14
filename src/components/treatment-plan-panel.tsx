@@ -55,7 +55,7 @@ export function TreatmentPlanPanel({ patientId, patientName }: { patientId: stri
       ) : (
         <div className="space-y-3">
           {plans.map((p) => (
-            <PlanCard key={p.id} plan={p} fees={fees} onChange={load} onDelete={async () => { await deletePlan(p.id); await load(); }} />
+            <PlanCard key={p.id} plan={p} fees={fees} patientName={patientName ?? "the patient"} onChange={load} onDelete={async () => { await deletePlan(p.id); await load(); }} />
           ))}
         </div>
       )}
