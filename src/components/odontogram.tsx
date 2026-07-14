@@ -123,6 +123,8 @@ export function Odontogram({ patientId }: { patientId: string }) {
               savingTooth={savingTooth}
               label="Lower"
               flip
+              dentition={dentition}
+
             />
           </>
         )}
