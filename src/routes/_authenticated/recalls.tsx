@@ -74,7 +74,7 @@ function RecallsPage() {
     >
       {error && (<div className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>)}
       <Card className="!p-0 overflow-hidden">
-        <SectionHeader title={filter === "due" ? "Overdue recalls" : filter === "upcoming" ? "Upcoming recalls" : "All recalls"} description="Set up individual recalls from the patient chart." />
+        <SectionHeader title={filter === "due" ? "Overdue recalls" : filter === "upcoming" ? "Upcoming recalls" : "All recalls"} />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
