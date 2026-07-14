@@ -67,27 +67,19 @@ export async function listIntakeForms(): Promise<IntakeFormRow[]> {
   return data ?? [];
 }
 
-/** Look up a patient by phone (exact) and DOB (exact). Returns first match or null. */
-export async function lookupPatient(phone: string, dob: string): Promise<{ id: string; full_name: string } | null> {
-  const { data, error } = await supabase
-    .from("patients")
-    .select("id, full_name")
-    .eq("phone", phone)
-    .eq("date_of_birth", dob)
-    .limit(1)
-    .maybeSingle();
+/** Create a patient from a booking request (used by staff to convert). */
+export async function createPatientFromBooking(b: BookingRequestRow): Promise<string> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const insert = {
+    full_name: b.full_name,
+    phone: b.phone,
+    email: b.email,
+    date_of_birth: b.date_of_birth,
+    status: "New" as const,
+    created_by: userRes.user?.id ?? null,
+  };
+  const { data, error } = await supabase.from("patients").insert(insert).select("id").single();
   if (error) throw error;
-  return data;
+  return data.id;
 }
 
-/** Look up upcoming appointments for a matched patient (by phone + DOB). */
-export async function lookupAppointmentsForPatient(patient_id: string) {
-  const { data, error } = await supabase
-    .from("appointments")
-    .select("id, start_at, duration_min, provider, procedure, status")
-    .eq("patient_id", patient_id)
-    .gte("start_at", new Date().toISOString())
-    .order("start_at", { ascending: true });
-  if (error) throw error;
-  return data ?? [];
-}
