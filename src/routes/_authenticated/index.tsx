@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -27,6 +27,14 @@ import {
   invoices,
   inventory,
 } from "@/lib/mock-data";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  endOfDay,
+  listAppointmentsForRange,
+  startOfDay,
+  type AppointmentWithPatient,
+} from "@/lib/appointments-api";
+
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -43,10 +51,6 @@ export const Route = createFileRoute("/_authenticated/")({
 const CLINIC_OPEN = 8;
 const CLINIC_CLOSE = 18;
 
-function toMins(hhmm: string) {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-}
 function fmt(mins: number) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -54,25 +58,59 @@ function fmt(mins: number) {
 }
 
 function DashboardPage() {
-  // Live "now" — pinned to 10:24 for demo, ticks every minute after mount.
-  const [nowMins, setNowMins] = useState(10 * 60 + 24);
+  const navigate = useNavigate();
+  const [nowMins, setNowMins] = useState(() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  });
   useEffect(() => {
-    const t = setInterval(() => setNowMins((n) => n + 1), 60_000);
+    const t = setInterval(() => {
+      const d = new Date();
+      setNowMins(d.getHours() * 60 + d.getMinutes());
+    }, 60_000);
     return () => clearInterval(t);
   }, []);
 
+  // Real appointments for today, with live realtime updates
+  const [today, setToday] = useState<AppointmentWithPatient[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      const now = new Date();
+      try {
+        const data = await listAppointmentsForRange(startOfDay(now), endOfDay(now));
+        setToday(data);
+      } catch {
+        setToday([]);
+      }
+    };
+    load();
+    const channel = supabase
+      .channel("dashboard-appts")
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => load())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const revenueToday = 8420;
-  const patientsToday = todaysAppointments.length;
+  const patientsToday = today.length;
   const outstanding = invoices.filter((i) => i.status !== "Paid").reduce((s, i) => s + i.amount, 0);
+
+  const arrivedCount = today.filter((a) => ["arrived", "in-chair", "completed"].includes(a.status)).length;
+  const inChairCount = today.filter((a) => a.status === "in-chair").length;
+  const unconfirmedCount = today.filter((a) => a.status === "unconfirmed").length;
+
+  const subtitle = `${new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} · ${today.length} appointments today`;
 
   return (
     <AppShell
       title="Clinic Overview"
-      subtitle="Tuesday, October 14 · 4 chairs · 2 dentists on the floor"
+      subtitle={subtitle}
       actions={
         <>
           <GhostButton icon={Share2}>Export report</GhostButton>
-          <PrimaryButton icon={Plus}>New appointment</PrimaryButton>
+          <PrimaryButton icon={Plus} onClick={() => navigate({ to: "/schedule" })}>New appointment</PrimaryButton>
         </>
       }
     >
@@ -85,7 +123,7 @@ function DashboardPage() {
           delta="+12%"
           up
           spark={<Bars data={[3, 5, 4, 6, 7, 5, 8, 6, 9, 7, 8, 10, 9, 12]} />}
-          caption={<>3 arrived · 1 in chair · 2 no-show risk</>}
+          caption={<>{arrivedCount} arrived · {inChairCount} in chair · {unconfirmedCount} unconfirmed</>}
           icon={Users}
         />
         <Kpi
@@ -122,8 +160,8 @@ function DashboardPage() {
 
       {/* MID ROW — live schedule + right-now snapshot */}
       <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <TodayScheduleStrip nowMins={nowMins} />
-        <RightNowSnapshot nowMins={nowMins} />
+        <TodayScheduleStrip nowMins={nowMins} items={today} />
+        <RightNowSnapshot nowMins={nowMins} items={today} />
       </section>
 
       {/* ACTION QUEUES */}
@@ -142,6 +180,8 @@ function DashboardPage() {
     </AppShell>
   );
 }
+
+
 
 /* ---------- KPI widgets ---------- */
 
@@ -225,7 +265,12 @@ function Bars({ data, full = false, muted = false }: { data: number[]; full?: bo
 
 /* ---------- Today's schedule (live now-line) ---------- */
 
-function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
+function apptMins(a: AppointmentWithPatient): number {
+  const d = new Date(a.start_at);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function TodayScheduleStrip({ nowMins, items }: { nowMins: number; items: AppointmentWithPatient[] }) {
   const hours = Array.from({ length: CLINIC_CLOSE - CLINIC_OPEN + 1 }, (_, i) => CLINIC_OPEN + i);
   const chairs = [1, 2, 3, 4] as const;
   const rowH = 44;
@@ -235,12 +280,14 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
   const nowLeft = ((nowMins - CLINIC_OPEN * 60) / 60) * hourW;
   const showNow = nowMins >= CLINIC_OPEN * 60 && nowMins <= CLINIC_CLOSE * 60;
 
-
   const toneMap: Record<string, string> = {
+    unconfirmed: "bg-amber-100 text-amber-800",
     confirmed: "bg-primary-soft text-accent-foreground",
     arrived: "bg-primary text-primary-foreground",
     "in-chair": "bg-emerald-500 text-primary-foreground",
-    unconfirmed: "bg-amber-100 text-amber-800",
+    completed: "bg-muted text-muted-foreground",
+    cancelled: "bg-red-100 text-red-700 line-through",
+    "no-show": "bg-red-100 text-red-700",
   };
 
   return (
@@ -288,26 +335,28 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
                   <span className="truncate">Ch {c}</span>
                 </div>
                 <div className="relative border-t border-border" style={{ height: rowH }}>
-                  {todaysAppointments
+                  {items
                     .filter((a) => a.chair === c)
                     .map((a) => {
-                      const start = toMins(a.start);
+                      const start = apptMins(a);
                       const left = ((start - CLINIC_OPEN * 60) / 60) * hourW;
-                      const width = (a.duration / 60) * hourW;
-                      const past = start + a.duration <= nowMins;
+                      const width = (a.duration_min / 60) * hourW;
+                      const past = start + a.duration_min <= nowMins;
+                      if (left < 0 || left > totalW) return null;
                       return (
-                        <div
+                        <Link
                           key={a.id}
+                          to="/schedule"
                           className={
                             "absolute top-1 bottom-1 truncate rounded-lg px-2 py-1 text-[11px] font-medium " +
                             toneMap[a.status] +
                             (past ? " opacity-55" : "")
                           }
                           style={{ left, width: Math.max(width - 3, 36) }}
-                          title={`${a.patient} — ${a.procedure}`}
+                          title={`${a.patient_name} — ${a.procedure}`}
                         >
-                          {a.start} · {a.patient}
-                        </div>
+                          {new Date(a.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                        </Link>
                       );
                     })}
                 </div>
@@ -316,25 +365,29 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
           </div>
         </div>
       </div>
-
+      {items.length === 0 && (
+        <div className="mt-3 rounded-2xl bg-muted/60 px-4 py-6 text-center text-xs text-muted-foreground">
+          No appointments booked for today. <Link to="/schedule" className="font-medium text-primary hover:underline">Open schedule</Link> to add one.
+        </div>
+      )}
     </Card>
   );
 }
 
-/* ---------- Right-now snapshot (replaces "Today at a glance") ---------- */
+/* ---------- Right-now snapshot ---------- */
 
-function RightNowSnapshot({ nowMins }: { nowMins: number }) {
-  const inChair = todaysAppointments.filter((a) => a.status === "in-chair");
-  const arrived = todaysAppointments.filter((a) => a.status === "arrived");
-  const nextUp = todaysAppointments
-    .filter((a) => toMins(a.start) >= nowMins)
-    .sort((a, b) => toMins(a.start) - toMins(b.start))[0];
-  const runningLate = todaysAppointments.find(
-    (a) => a.status === "confirmed" && toMins(a.start) < nowMins - 5,
+function RightNowSnapshot({ nowMins, items }: { nowMins: number; items: AppointmentWithPatient[] }) {
+  const inChair = items.filter((a) => a.status === "in-chair");
+  const arrived = items.filter((a) => a.status === "arrived");
+  const nextUp = items
+    .filter((a) => apptMins(a) >= nowMins && !["cancelled", "no-show", "completed"].includes(a.status))
+    .sort((a, b) => apptMins(a) - apptMins(b))[0];
+  const runningLate = items.find(
+    (a) => a.status === "confirmed" && apptMins(a) < nowMins - 5,
   );
 
   const stats = [
-    { label: "Booked", value: todaysAppointments.length, tone: "text-foreground" },
+    { label: "Booked", value: items.length, tone: "text-foreground" },
     { label: "Arrived", value: arrived.length, tone: "text-primary" },
     { label: "In chair", value: inChair.length, tone: "text-primary" },
     { label: "Late", value: runningLate ? 1 : 0, tone: runningLate ? "text-red-600" : "text-muted-foreground" },
@@ -370,12 +423,12 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <Stethoscope className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="truncate text-sm font-medium">{a.patient}</span>
+                <span className="truncate text-sm font-medium">{a.patient_name}</span>
               </div>
               <div className="truncate text-xs text-muted-foreground">Chair {a.chair} · {a.procedure}</div>
             </div>
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-              {Math.max(0, nowMins - toMins(a.start))}m in
+              {Math.max(0, nowMins - apptMins(a))}m in
             </span>
           </li>
         ))}
@@ -384,11 +437,11 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
           <li className="flex list-none items-center justify-between rounded-2xl bg-primary-soft/60 px-3 py-2.5">
             <div className="min-w-0">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-accent-foreground">Next up</div>
-              <div className="truncate text-sm font-medium">{nextUp.patient}</div>
+              <div className="truncate text-sm font-medium">{nextUp.patient_name}</div>
               <div className="truncate text-xs text-muted-foreground">Chair {nextUp.chair} · {nextUp.procedure}</div>
             </div>
             <span className="rounded-full bg-card px-2.5 py-0.5 text-[11px] font-semibold text-foreground ring-1 ring-border">
-              in {Math.max(0, toMins(nextUp.start) - nowMins)}m
+              in {Math.max(0, apptMins(nextUp) - nowMins)}m
             </span>
           </li>
         )}
@@ -399,19 +452,25 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-800">
                 <AlertTriangle className="h-3 w-3" /> Running late
               </div>
-              <div className="truncate text-sm font-medium">{runningLate.patient}</div>
-              <div className="truncate text-xs text-muted-foreground">{runningLate.start} · {runningLate.procedure}</div>
+              <div className="truncate text-sm font-medium">{runningLate.patient_name}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                {new Date(runningLate.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {runningLate.procedure}
+              </div>
             </div>
             <button className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:opacity-90">
               <Phone className="h-3 w-3" /> Call
             </button>
           </li>
         )}
+
+        {items.length === 0 && (
+          <li className="rounded-2xl bg-muted/50 px-3 py-4 text-center text-xs text-muted-foreground">Nothing booked yet today.</li>
+        )}
       </ul>
     </Card>
-
   );
 }
+
 
 /* ---------- Action queues ---------- */
 

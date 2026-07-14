@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          chair: number
+          created_at: string
+          created_by: string | null
+          duration_min: number
+          id: string
+          notes: string | null
+          patient_id: string
+          procedure: string
+          provider: string
+          start_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }
+        Insert: {
+          chair: number
+          created_at?: string
+          created_by?: string | null
+          duration_min: number
+          id?: string
+          notes?: string | null
+          patient_id: string
+          procedure: string
+          provider: string
+          start_at: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Update: {
+          chair?: number
+          created_at?: string
+          created_by?: string | null
+          duration_min?: number
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          procedure?: string
+          provider?: string
+          start_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null
@@ -140,6 +193,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "dentist" | "hygienist" | "front_desk"
+      appointment_status:
+        | "unconfirmed"
+        | "confirmed"
+        | "arrived"
+        | "in-chair"
+        | "completed"
+        | "cancelled"
+        | "no-show"
       patient_sex: "F" | "M" | "Other"
       patient_status: "Active" | "Recall" | "Overdue" | "New"
     }
@@ -270,6 +331,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "dentist", "hygienist", "front_desk"],
+      appointment_status: [
+        "unconfirmed",
+        "confirmed",
+        "arrived",
+        "in-chair",
+        "completed",
+        "cancelled",
+        "no-show",
+      ],
       patient_sex: ["F", "M", "Other"],
       patient_status: ["Active", "Recall", "Overdue", "New"],
     },
