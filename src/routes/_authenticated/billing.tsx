@@ -3,7 +3,7 @@ import { Plus, Download, DollarSign, ArrowUpRight } from "lucide-react";
 import { AppShell, Card, GhostButton, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
 import { invoices } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/billing")({
+export const Route = createFileRoute("/_authenticated/billing")({
   head: () => ({
     meta: [
       { title: "Billing — Enamel Dental Clinic" },

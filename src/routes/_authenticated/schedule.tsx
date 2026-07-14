@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Plus, Circle } from "lucide-react";
 import { AppShell, Card, GhostButton, PrimaryButton, SectionHeader } from "@/components/app-shell";
 import { todaysAppointments, staff } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/schedule")({
+export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
     meta: [
       { title: "Schedule — Enamel Dental Clinic" },

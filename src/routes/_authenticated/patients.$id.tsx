@@ -16,7 +16,7 @@ import {
 import { AppShell, Card, GhostButton, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
 import { patients, toothChart, invoices, type ToothCondition } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/patients/$id")({
+export const Route = createFileRoute("/_authenticated/patients/$id")({
   loader: ({ params }) => {
     const patient = patients.find((p) => p.id === params.id);
     if (!patient) throw notFound();

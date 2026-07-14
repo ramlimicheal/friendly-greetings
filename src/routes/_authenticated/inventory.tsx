@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AppShell, Card, GhostButton, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
 import { inventory } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/inventory")({
+export const Route = createFileRoute("/_authenticated/inventory")({
   head: () => ({
     meta: [
       { title: "Inventory — Enamel Dental Clinic" },
