@@ -123,16 +123,10 @@ function TopNav() {
           </button>
 
           {/* User */}
-          <button className="ml-1 flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-2.5 transition hover:bg-muted">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-accent-foreground">
-              DR
-            </span>
-            <div className="hidden pr-0.5 text-left sm:block">
-              <div className="text-xs font-semibold leading-tight">Dr. Rina Okafor</div>
-              <div className="text-[10px] leading-tight text-muted-foreground">Lead Dentist</div>
-            </div>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          <UserMenu />
+        </div>
+      </div>
+
         </div>
       </div>
 
