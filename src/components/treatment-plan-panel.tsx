@@ -63,12 +63,14 @@ export function TreatmentPlanPanel({ patientId, patientName }: { patientId: stri
   );
 }
 
-function PlanCard({ plan, fees, onChange, onDelete }: { plan: TreatmentPlanRow; fees: FeeRow[]; onChange: () => void; onDelete: () => void }) {
+function PlanCard({ plan, fees, patientName, onChange, onDelete }: { plan: TreatmentPlanRow; fees: FeeRow[]; patientName: string; onChange: () => void; onDelete: () => void }) {
   const [open, setOpen] = useState(true);
   const [items, setItems] = useState<TreatmentPlanItemRow[]>([]);
   const [title, setTitle] = useState(plan.title);
   const [status, setStatus] = useState(plan.status);
+  const [explainOpen, setExplainOpen] = useState(false);
   useEffect(() => { listItems(plan.id).then(setItems).catch(() => {}); }, [plan.id]);
+
 
   const totals = useMemo(() => planTotals(items), [items]);
   const grouped = useMemo(() => {
