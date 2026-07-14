@@ -57,7 +57,7 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
-      const payload: PatientInsert = {
+      const payload = {
         full_name,
         date_of_birth: date_of_birth || null,
         sex: (sex || null) as PatientSex | null,
@@ -69,8 +69,9 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
         address: address || null,
         notes: notes || null,
         allergies,
-      };
-      if (chart_no) payload.chart_no = chart_no;
+        ...(chart_no ? { chart_no } : {}),
+      } as PatientInsert;
+
 
       await onSubmit(payload);
       onClose();
