@@ -262,6 +262,44 @@ function Info({ icon: Icon, label }: { icon: React.ComponentType<{ className?: s
   );
 }
 
+function AlertGroup({ title, tone, items }: { title: string; tone: "danger" | "warn" | "info"; items: string[] }) {
+  const styles = tone === "danger"
+    ? "bg-red-50 ring-red-100 text-red-700"
+    : tone === "warn"
+      ? "bg-amber-50 ring-amber-100 text-amber-800"
+      : "bg-sky-50 ring-sky-100 text-sky-800";
+  return (
+    <div>
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</div>
+      <ul className="space-y-1.5">
+        {items.map((x) => (
+          <li key={x} className={`rounded-xl px-3 py-1.5 text-xs font-medium ring-1 ${styles}`}>{x}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MedicalAlertBanner({ patient }: { patient: PatientRow }) {
+  const allergies = patient.allergies ?? [];
+  const conditions = (patient as any).medical_conditions ?? [];
+  const meds = (patient as any).medications ?? [];
+  if (allergies.length + conditions.length + meds.length === 0) return null;
+  const chips: { label: string; tone: string }[] = [];
+  allergies.forEach((a: string) => chips.push({ label: `Allergy: ${a}`, tone: "bg-red-600 text-white" }));
+  conditions.forEach((c: string) => chips.push({ label: c, tone: "bg-amber-500 text-white" }));
+  meds.forEach((m: string) => chips.push({ label: `Rx: ${m}`, tone: "bg-sky-600 text-white" }));
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border-l-4 border-red-600 bg-red-50 px-4 py-3 ring-1 ring-red-100">
+      <AlertTriangle className="h-4 w-4 text-red-600" />
+      <span className="text-sm font-semibold text-red-800">Medical alerts:</span>
+      {chips.map((c, i) => (
+        <span key={i} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${c.tone}`}>{c.label}</span>
+      ))}
+    </div>
+  );
+}
+
 function OverviewTab({ patient }: { patient: PatientRow }) {
   const items = [
     { t: "Chart #", v: patient.chart_no },
