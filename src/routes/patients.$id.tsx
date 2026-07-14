@@ -91,7 +91,7 @@ function PatientDetail() {
             <SectionHeader title="Alerts" icon={AlertTriangle} />
             {patient.allergies.length > 0 ? (
               <ul className="space-y-2">
-                {patient.allergies.map((a) => (
+                {patient.allergies.map((a: string) => (
                   <li key={a} className="flex items-center justify-between rounded-2xl bg-red-50 px-3 py-2 text-sm ring-1 ring-red-100">
                     <span className="font-medium text-red-700">Allergy · {a}</span>
                     <Pill tone="danger">Avoid</Pill>

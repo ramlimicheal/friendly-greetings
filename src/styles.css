@@ -35,6 +35,8 @@
   --color-ring: var(--ring);
   --color-surface: var(--surface);
   --color-chip: var(--chip);
+  --grid-template-columns-16: repeat(16, minmax(0, 1fr));
+
 }
 
 :root {
