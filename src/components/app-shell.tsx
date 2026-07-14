@@ -19,21 +19,31 @@ import {
   Command,
   ListChecks,
   RefreshCcw,
+  ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import type { AppRole } from "@/hooks/use-auth";
 
-type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  exact?: boolean;
+  roles?: AppRole[]; // if omitted, all roles see it
+};
 const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
   { to: "/waitlist", label: "Waitlist", icon: ListChecks },
   { to: "/recalls", label: "Recalls", icon: RefreshCcw },
-  { to: "/treatments", label: "Treatments", icon: Stethoscope },
-  { to: "/billing", label: "Billing", icon: Receipt },
-  { to: "/inventory", label: "Inventory", icon: Package },
-  { to: "/reports", label: "Reports", icon: BarChart3 },
+  { to: "/treatments", label: "Treatments", icon: Stethoscope, roles: ["admin", "dentist", "hygienist"] },
+  { to: "/billing", label: "Billing", icon: Receipt, roles: ["admin", "front_desk", "dentist"] },
+  { to: "/inventory", label: "Inventory", icon: Package, roles: ["admin", "front_desk"] },
+  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["admin", "dentist"] },
+  { to: "/staff", label: "Staff", icon: ShieldCheck, roles: ["admin"] },
 ];
+
 
 
 export function AppShell({
@@ -69,6 +79,9 @@ export function AppShell({
 
 function TopNav() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
+  const { roles } = useAuth();
+  const visibleNav = NAV.filter((n) => !n.roles || n.roles.some((r) => roles.includes(r)));
+
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
       {/* Row 1: brand · search · actions */}
@@ -137,7 +150,7 @@ function TopNav() {
       {/* Row 2: primary nav — dedicated row for clarity */}
       <div className="border-t border-border/60">
         <nav className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-3 py-2 sm:px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {NAV.map((n) => {
+          {visibleNav.map((n) => {
             const active = n.exact ? currentPath === n.to : currentPath.startsWith(n.to);
             return (
               <Link

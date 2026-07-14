@@ -1,10 +1,18 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Plus, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { getInvitationByToken, type AppRole } from "@/lib/staff.functions";
+
+type Search = { invite?: string; bootstrap?: string };
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    invite: typeof s.invite === "string" ? s.invite : undefined,
+    bootstrap: typeof s.bootstrap === "string" ? s.bootstrap : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — Enamel Clinic" },
@@ -19,25 +27,64 @@ type Mode = "signin" | "signup";
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>("signin");
+  const search = useSearch({ from: "/auth" });
+  const inviteToken = search.invite;
+  const bootstrap = search.bootstrap === "1";
+  const [mode, setMode] = useState<Mode>(inviteToken || bootstrap ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [inviteRole, setInviteRole] = useState<AppRole | null>(null);
+  const [inviteChecking, setInviteChecking] = useState(false);
+  const [inviteInvalid, setInviteInvalid] = useState<string | null>(null);
 
-  // If already signed in, bounce to dashboard.
+  const getInviteFn = useServerFn(getInvitationByToken);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) navigate({ to: "/" });
     });
   }, [navigate]);
 
+  useEffect(() => {
+    if (!inviteToken) return;
+    setInviteChecking(true);
+    getInviteFn({ data: { token: inviteToken } })
+      .then((res) => {
+        if (res.valid) {
+          setEmail(res.email);
+          setInviteRole(res.role);
+          setMode("signup");
+          setInviteInvalid(null);
+        } else {
+          setInviteInvalid(
+            res.reason === "expired"
+              ? "This invitation has expired."
+              : res.reason === "used"
+              ? "This invitation has already been used."
+              : "Invitation not found.",
+          );
+        }
+      })
+      .catch((e: Error) => setInviteInvalid(e.message))
+      .finally(() => setInviteChecking(false));
+  }, [inviteToken, getInviteFn]);
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setInfo(null);
+    if (mode === "signup" && !inviteToken && !bootstrap) {
+      setError("Sign-ups are invite only. Ask your clinic admin for an invitation link.");
+      return;
+    }
+    if (mode === "signup" && inviteToken && !inviteRole) {
+      setError("Invite invalid — cannot create account.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
@@ -50,7 +97,6 @@ function AuthPage() {
           },
         });
         if (err) throw err;
-        // With email confirmation disabled you'll be signed in; otherwise notify.
         const { data: u } = await supabase.auth.getUser();
         if (u.user) {
           navigate({ to: "/" });
@@ -71,6 +117,10 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setError(null);
+    if (mode === "signup" && !inviteToken && !bootstrap) {
+      setError("Sign-ups are invite only. Ask your clinic admin for an invitation link.");
+      return;
+    }
     setBusy(true);
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
@@ -82,6 +132,13 @@ function AuthPage() {
     }
     if (result.redirected) return;
     navigate({ to: "/" });
+  };
+
+  const roleLabel: Record<AppRole, string> = {
+    admin: "Admin",
+    dentist: "Dentist",
+    hygienist: "Hygienist",
+    front_desk: "Front desk",
   };
 
   return (
@@ -104,13 +161,29 @@ function AuthPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "signin"
               ? "Welcome back — sign in to continue."
-              : "First user becomes the clinic admin."}
+              : inviteRole
+              ? `Invited as ${roleLabel[inviteRole]}. Complete your account below.`
+              : bootstrap
+              ? "First user becomes the clinic admin."
+              : "Sign-ups are invite only."}
           </p>
+
+          {inviteChecking && (
+            <div className="mt-4 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+              Checking invitation…
+            </div>
+          )}
+          {inviteInvalid && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              <ShieldAlert className="mt-0.5 h-3.5 w-3.5" />
+              <span>{inviteInvalid}</span>
+            </div>
+          )}
 
           <button
             type="button"
             onClick={handleGoogle}
-            disabled={busy}
+            disabled={busy || (mode === "signup" && !!inviteInvalid)}
             className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-60"
           >
             <GoogleIcon />
@@ -143,7 +216,8 @@ function AuthPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/40"
+                readOnly={mode === "signup" && !!inviteRole}
+                className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/40 read-only:bg-muted/50"
               />
             </div>
             <div>
@@ -171,7 +245,7 @@ function AuthPage() {
 
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || (mode === "signup" && !!inviteInvalid)}
               className="mt-2 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
             >
               {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
@@ -181,7 +255,7 @@ function AuthPage() {
           <div className="mt-5 text-center text-xs text-muted-foreground">
             {mode === "signin" ? (
               <>
-                No account?{" "}
+                Have an invitation?{" "}
                 <button
                   type="button"
                   onClick={() => {
@@ -191,7 +265,7 @@ function AuthPage() {
                   }}
                   className="font-medium text-foreground underline-offset-2 hover:underline"
                 >
-                  Create one
+                  Create account
                 </button>
               </>
             ) : (
