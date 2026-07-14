@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus, Circle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, Plus, Circle, ListChecks } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell, Card, GhostButton, PrimaryButton, SectionHeader } from "@/components/app-shell";
 import { AppointmentFormDialog } from "@/components/appointment-form-dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +11,14 @@ import {
   deleteAppointment,
   endOfDay,
   listAppointmentsForRange,
+  rescheduleAppointment,
   startOfDay,
   updateAppointment,
   type AppointmentInsert,
   type AppointmentStatus,
   type AppointmentWithPatient,
 } from "@/lib/appointments-api";
+import { listWaitlist, markWaitlistScheduled, type WaitlistWithPatient } from "@/lib/waitlist-api";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
