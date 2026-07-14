@@ -121,7 +121,7 @@ function DashboardPage() {
       </section>
 
       {/* MID ROW — live schedule + right-now snapshot */}
-      <section className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-[1fr_380px]">
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <TodayScheduleStrip nowMins={nowMins} />
         <RightNowSnapshot nowMins={nowMins} />
       </section>
@@ -229,10 +229,12 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
   const hours = Array.from({ length: CLINIC_CLOSE - CLINIC_OPEN + 1 }, (_, i) => CLINIC_OPEN + i);
   const chairs = [1, 2, 3, 4] as const;
   const rowH = 44;
-  const hourW = 90;
+  const labelW = 64;
+  const hourW = 64;
   const totalW = hours.length * hourW;
   const nowLeft = ((nowMins - CLINIC_OPEN * 60) / 60) * hourW;
   const showNow = nowMins >= CLINIC_OPEN * 60 && nowMins <= CLINIC_CLOSE * 60;
+
 
   const toneMap: Record<string, string> = {
     confirmed: "bg-primary-soft text-accent-foreground",
@@ -258,8 +260,8 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
         }
       />
       <div className="overflow-x-auto">
-        <div style={{ minWidth: totalW + 72 }}>
-          <div className="grid" style={{ gridTemplateColumns: `72px repeat(${hours.length}, ${hourW}px)` }}>
+        <div style={{ minWidth: totalW + labelW }}>
+          <div className="grid" style={{ gridTemplateColumns: `${labelW}px repeat(${hours.length}, ${hourW}px)` }}>
             <div />
             {hours.map((h) => (
               <div key={h} className="border-l border-dashed border-border px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -268,11 +270,11 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
             ))}
           </div>
 
-          <div className="relative grid" style={{ gridTemplateColumns: `72px ${totalW}px` }}>
+          <div className="relative grid" style={{ gridTemplateColumns: `${labelW}px ${totalW}px` }}>
             {showNow && (
               <div
                 className="pointer-events-none absolute top-0 z-20 h-full"
-                style={{ left: 72 + nowLeft }}
+                style={{ left: labelW + nowLeft }}
               >
                 <div className="relative h-full w-px bg-red-500/70">
                   <span className="absolute -left-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
@@ -281,9 +283,9 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
             )}
             {chairs.map((c) => (
               <div key={c} className="contents">
-                <div className="flex items-center gap-1 py-2 text-xs font-medium text-muted-foreground">
+                <div className="flex items-center gap-1 border-t border-border py-2 text-xs font-medium text-muted-foreground">
                   <Circle className="h-2 w-2 fill-primary text-primary" />
-                  Chair {c}
+                  <span className="truncate">Ch {c}</span>
                 </div>
                 <div className="relative border-t border-border" style={{ height: rowH }}>
                   {todaysAppointments
@@ -301,7 +303,7 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
                             toneMap[a.status] +
                             (past ? " opacity-55" : "")
                           }
-                          style={{ left, width: Math.max(width - 3, 40) }}
+                          style={{ left, width: Math.max(width - 3, 36) }}
                           title={`${a.patient} — ${a.procedure}`}
                         >
                           {a.start} · {a.patient}
@@ -314,6 +316,7 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
           </div>
         </div>
       </div>
+
     </Card>
   );
 }
@@ -361,7 +364,7 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
         ))}
       </div>
 
-      <div className="mt-5 space-y-2">
+      <ul className="mt-5 space-y-2">
         {inChair.map((a) => (
           <li key={a.id} className="flex list-none items-center justify-between rounded-2xl bg-muted/60 px-3 py-2.5">
             <div className="min-w-0">
@@ -404,8 +407,9 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
             </button>
           </li>
         )}
-      </div>
+      </ul>
     </Card>
+
   );
 }
 
