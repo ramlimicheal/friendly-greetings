@@ -407,8 +407,9 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
             </button>
           </li>
         )}
-      </div>
+      </ul>
     </Card>
+
   );
 }
 
