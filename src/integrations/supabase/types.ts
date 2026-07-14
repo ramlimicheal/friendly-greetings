@@ -273,6 +273,68 @@ export type Database = {
           },
         ]
       }
+      tooth_charts: {
+        Row: {
+          chart_date: string
+          created_at: string
+          dentition: string
+          id: string
+          notes: string | null
+          patient_id: string
+          surface_buccal: string
+          surface_distal: string
+          surface_lingual: string
+          surface_mesial: string
+          surface_occlusal: string
+          tooth_condition: string
+          tooth_number: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          chart_date?: string
+          created_at?: string
+          dentition?: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          surface_buccal?: string
+          surface_distal?: string
+          surface_lingual?: string
+          surface_mesial?: string
+          surface_occlusal?: string
+          tooth_condition?: string
+          tooth_number: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          chart_date?: string
+          created_at?: string
+          dentition?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          surface_buccal?: string
+          surface_distal?: string
+          surface_lingual?: string
+          surface_mesial?: string
+          surface_occlusal?: string
+          tooth_condition?: string
+          tooth_number?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tooth_charts_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
