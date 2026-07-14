@@ -35,6 +35,7 @@ const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
+  { to: "/bookings", txt: "Bookings", icon: CalendarClock as unknown as typeof LayoutDashboard, roles: ["admin", "front_desk", "dentist", "hygienist"] } as unknown as NavItem,
   { to: "/waitlist", label: "Waitlist", icon: ListChecks },
   { to: "/recalls", label: "Recalls", icon: RefreshCcw },
   { to: "/treatments", label: "Treatments", icon: Stethoscope, roles: ["admin", "dentist", "hygienist"] },
