@@ -4,6 +4,7 @@ import { listPatients, type PatientRow } from "@/lib/patients-api";
 import {
   APPOINTMENT_STATUSES,
   STATUS_LABEL,
+  checkAppointmentConflict,
   type AppointmentInsert,
   type AppointmentRow,
   type AppointmentStatus,
