@@ -169,6 +169,8 @@ function PatientDetail() {
               {balance > 0 ? "Outstanding — send statement?" : "Account in good standing."}
             </p>
           </Card>
+
+          <PatientRecalls patientId={patient.id} />
         </div>
 
         {/* right main */}
