@@ -51,6 +51,8 @@ function BillingPage() {
   const [invoiceDialog, setInvoiceDialog] = useState<{ open: boolean; editing?: any }>({ open: false });
   const [payDialog, setPayDialog] = useState<{ open: boolean; invoiceId?: string | null }>({ open: false });
   const [claimDialog, setClaimDialog] = useState<{ open: boolean; editing?: any }>({ open: false });
+  const [aiOpen, setAiOpen] = useState(false);
+
 
   const patientsQ = useQuery({ queryKey: ["patients"], queryFn: listPatients });
   const invoicesQ = useQuery({ queryKey: ["invoices"], queryFn: () => listInvoices() });
