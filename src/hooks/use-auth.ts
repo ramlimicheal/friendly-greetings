@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -8,6 +8,7 @@ export type Profile = {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  is_active?: boolean;
 };
 
 export function useAuth() {
@@ -26,7 +27,11 @@ export function useAuth() {
         return;
       }
       const [{ data: p }, { data: r }] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, avatar_url").eq("id", u.id).maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url, is_active")
+          .eq("id", u.id)
+          .maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", u.id),
       ]);
       if (!mounted) return;
@@ -53,5 +58,15 @@ export function useAuth() {
     };
   }, []);
 
-  return { user, profile, roles, loading };
+  const helpers = useMemo(
+    () => ({
+      hasRole: (r: AppRole) => roles.includes(r),
+      hasAnyRole: (rs: AppRole[]) => rs.some((r) => roles.includes(r)),
+      isAdmin: roles.includes("admin"),
+      isClinical: roles.some((r) => r === "admin" || r === "dentist" || r === "hygienist"),
+    }),
+    [roles],
+  );
+
+  return { user, profile, roles, loading, ...helpers };
 }
