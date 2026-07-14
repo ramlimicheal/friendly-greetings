@@ -127,8 +127,7 @@ function TopNav() {
         </div>
       </div>
 
-        </div>
-      </div>
+
 
       {/* Row 2: primary nav — dedicated row for clarity */}
       <div className="border-t border-border/60">
