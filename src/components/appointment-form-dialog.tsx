@@ -106,16 +106,29 @@ export function AppointmentFormDialog({
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setConflictWarn(null);
     try {
       if (!patient_id) throw new Error("Choose a patient");
+      const startIso = new Date(start_at).toISOString();
+      // Skip conflict check for cancelled/no-show — they don't block a chair.
+      if (status !== "cancelled" && status !== "no-show") {
+        const conflicts = await checkAppointmentConflict({
+          chair, provider, start_at: startIso, duration_min,
+          exclude_id: initial?.id,
+        });
+        if (conflicts.length > 0) {
+          const c = conflicts[0];
+          const t = new Date(c.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+          setConflictWarn(
+            `Conflicts with an existing ${c.conflict_type} booking at ${t} (${c.duration_min} min). Change the time, chair, or provider.`,
+          );
+          setBusy(false);
+          return;
+        }
+      }
       const payload: AppointmentInsert = {
-        patient_id,
-        chair,
-        provider,
-        procedure,
-        start_at: new Date(start_at).toISOString(),
-        duration_min,
-        status,
+        patient_id, chair, provider, procedure,
+        start_at: startIso, duration_min, status,
         notes: notes || null,
       };
       await onSubmit(payload);
