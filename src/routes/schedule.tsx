@@ -38,7 +38,7 @@ function SchedulePage() {
           </div>
           <div className="flex items-center gap-1 rounded-full bg-muted p-1">
             {["Day", "Week", "Month"].map((v, i) => (
-              <button key={v} className={"rounded-full px-3 py-1.5 text-xs font-medium " + (i === 0 ? "bg-card shadow-sm" : "text-muted-foreground")}>{v}</button>
+              <button key={v} className={"rounded-full px-3 py-1.5 text-xs font-medium " + (i === 0 ? "bg-card" : "text-muted-foreground")}>{v}</button>
             ))}
           </div>
           <PrimaryButton icon={Plus}>New appointment</PrimaryButton>
@@ -92,7 +92,7 @@ function SchedulePage() {
                     return (
                       <div
                         key={a.id}
-                        className={"absolute left-1 right-1 rounded-xl px-2 py-1.5 text-[11px] shadow-sm " + STATUS_TONE[a.status]}
+                        className={"absolute left-1 right-1 rounded-xl px-2 py-1.5 text-[11px] " + STATUS_TONE[a.status]}
                         style={{ top, height: height - 3 }}
                       >
                         <div className="font-semibold">{a.start} · {a.patient}</div>

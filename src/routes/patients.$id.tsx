@@ -125,7 +125,7 @@ function PatientDetail() {
                   onClick={() => setTab(t)}
                   className={
                     "rounded-full px-4 py-1.5 text-sm font-medium transition capitalize " +
-                    (tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")
+                    (tab === t ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground")
                   }
                 >
                   {t === "chart" ? "Odontogram" : t}

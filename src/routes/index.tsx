@@ -334,7 +334,7 @@ function TodayScheduleStrip() {
                       return (
                         <div
                           key={a.id}
-                          className={"absolute top-1 bottom-1 truncate rounded-lg px-2 py-1 text-[11px] font-medium shadow-sm " + toneMap[a.status]}
+                          className={"absolute top-1 bottom-1 truncate rounded-lg px-2 py-1 text-[11px] font-medium " + toneMap[a.status]}
                           style={{ left, width: Math.max(width - 3, 40) }}
                           title={`${a.patient} — ${a.procedure}`}
                         >
