@@ -68,7 +68,7 @@ function TopNav() {
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
       {/* Row 1: brand · search · actions */}
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-4 px-6">
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:gap-4 sm:px-6">
         {/* Brand */}
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
