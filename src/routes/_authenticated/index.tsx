@@ -229,10 +229,12 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
   const hours = Array.from({ length: CLINIC_CLOSE - CLINIC_OPEN + 1 }, (_, i) => CLINIC_OPEN + i);
   const chairs = [1, 2, 3, 4] as const;
   const rowH = 44;
-  const hourW = 90;
+  const labelW = 64;
+  const hourW = 64;
   const totalW = hours.length * hourW;
   const nowLeft = ((nowMins - CLINIC_OPEN * 60) / 60) * hourW;
   const showNow = nowMins >= CLINIC_OPEN * 60 && nowMins <= CLINIC_CLOSE * 60;
+
 
   const toneMap: Record<string, string> = {
     confirmed: "bg-primary-soft text-accent-foreground",
