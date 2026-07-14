@@ -28,7 +28,7 @@ import {
   type PatientInsert,
   type PatientRow,
 } from "@/lib/patients-api";
-import { toothChart, type ToothCondition } from "@/lib/mock-data";
+import { Odontogram } from "@/components/odontogram";
 
 export const Route = createFileRoute("/_authenticated/patients/$id")({
   head: () => ({
