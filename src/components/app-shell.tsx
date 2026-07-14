@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   CalendarDays,
+  CalendarClock,
   Stethoscope,
   Receipt,
   Package,
