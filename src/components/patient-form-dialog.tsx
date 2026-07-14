@@ -28,6 +28,8 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [allergiesInput, setAllergiesInput] = useState("");
+  const [conditionsInput, setConditionsInput] = useState("");
+  const [medicationsInput, setMedicationsInput] = useState("");
 
   useEffect(() => {
     if (!open) return;
