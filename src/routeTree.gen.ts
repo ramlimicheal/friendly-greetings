@@ -13,9 +13,11 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
 import { Route as AuthenticatedTreatmentsRouteImport } from './routes/_authenticated/treatments'
 import { Route as AuthenticatedScheduleRouteImport } from './routes/_authenticated/schedule'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedRecallsRouteImport } from './routes/_authenticated/recalls'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedPatientsIndexRouteImport } from './routes/_authenticated/patients.index'
@@ -40,6 +42,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWaitlistRoute = AuthenticatedWaitlistRouteImport.update({
+  id: '/waitlist',
+  path: '/waitlist',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTreatmentsRoute = AuthenticatedTreatmentsRouteImport.update({
   id: '/treatments',
   path: '/treatments',
@@ -53,6 +60,11 @@ const AuthenticatedScheduleRoute = AuthenticatedScheduleRouteImport.update({
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRecallsRoute = AuthenticatedRecallsRouteImport.update({
+  id: '/recalls',
+  path: '/recalls',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
@@ -83,9 +95,11 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/recalls': typeof AuthenticatedRecallsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/treatments': typeof AuthenticatedTreatmentsRoute
+  '/waitlist': typeof AuthenticatedWaitlistRoute
   '/patients/$id': typeof AuthenticatedPatientsIdRoute
   '/patients/': typeof AuthenticatedPatientsIndexRoute
 }
@@ -94,9 +108,11 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/recalls': typeof AuthenticatedRecallsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/schedule': typeof AuthenticatedScheduleRoute
   '/treatments': typeof AuthenticatedTreatmentsRoute
+  '/waitlist': typeof AuthenticatedWaitlistRoute
   '/': typeof AuthenticatedIndexRoute
   '/patients/$id': typeof AuthenticatedPatientsIdRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
@@ -108,9 +124,11 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/recalls': typeof AuthenticatedRecallsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/schedule': typeof AuthenticatedScheduleRoute
   '/_authenticated/treatments': typeof AuthenticatedTreatmentsRoute
+  '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/patients/$id': typeof AuthenticatedPatientsIdRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
@@ -123,9 +141,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/billing'
     | '/inventory'
+    | '/recalls'
     | '/reports'
     | '/schedule'
     | '/treatments'
+    | '/waitlist'
     | '/patients/$id'
     | '/patients/'
   fileRoutesByTo: FileRoutesByTo
@@ -134,9 +154,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/billing'
     | '/inventory'
+    | '/recalls'
     | '/reports'
     | '/schedule'
     | '/treatments'
+    | '/waitlist'
     | '/'
     | '/patients/$id'
     | '/patients'
@@ -147,9 +169,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/billing'
     | '/_authenticated/inventory'
+    | '/_authenticated/recalls'
     | '/_authenticated/reports'
     | '/_authenticated/schedule'
     | '/_authenticated/treatments'
+    | '/_authenticated/waitlist'
     | '/_authenticated/'
     | '/_authenticated/patients/$id'
     | '/_authenticated/patients/'
@@ -191,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/waitlist': {
+      id: '/_authenticated/waitlist'
+      path: '/waitlist'
+      fullPath: '/waitlist'
+      preLoaderRoute: typeof AuthenticatedWaitlistRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/treatments': {
       id: '/_authenticated/treatments'
       path: '/treatments'
@@ -210,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/recalls': {
+      id: '/_authenticated/recalls'
+      path: '/recalls'
+      fullPath: '/recalls'
+      preLoaderRoute: typeof AuthenticatedRecallsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/inventory': {
@@ -246,9 +284,11 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedRecallsRoute: typeof AuthenticatedRecallsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedScheduleRoute: typeof AuthenticatedScheduleRoute
   AuthenticatedTreatmentsRoute: typeof AuthenticatedTreatmentsRoute
+  AuthenticatedWaitlistRoute: typeof AuthenticatedWaitlistRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedPatientsIdRoute: typeof AuthenticatedPatientsIdRoute
   AuthenticatedPatientsIndexRoute: typeof AuthenticatedPatientsIndexRoute
@@ -257,9 +297,11 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedRecallsRoute: AuthenticatedRecallsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedScheduleRoute: AuthenticatedScheduleRoute,
   AuthenticatedTreatmentsRoute: AuthenticatedTreatmentsRoute,
+  AuthenticatedWaitlistRoute: AuthenticatedWaitlistRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedPatientsIdRoute: AuthenticatedPatientsIdRoute,
   AuthenticatedPatientsIndexRoute: AuthenticatedPatientsIndexRoute,

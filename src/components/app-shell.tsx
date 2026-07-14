@@ -17,6 +17,8 @@ import {
   Plus,
   HelpCircle,
   Command,
+  ListChecks,
+  RefreshCcw,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -25,6 +27,8 @@ const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
+  { to: "/waitlist", label: "Waitlist", icon: ListChecks },
+  { to: "/recalls", label: "Recalls", icon: RefreshCcw },
   { to: "/treatments", label: "Treatments", icon: Stethoscope },
   { to: "/billing", label: "Billing", icon: Receipt },
   { to: "/inventory", label: "Inventory", icon: Package },

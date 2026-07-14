@@ -169,6 +169,8 @@ function PatientDetail() {
               {balance > 0 ? "Outstanding — send statement?" : "Account in good standing."}
             </p>
           </Card>
+
+          <PatientRecalls patientId={patient.id} />
         </div>
 
         {/* right main */}
@@ -363,5 +365,67 @@ function Tooth({
       </svg>
       {orient === "lower" && <span className="text-muted-foreground">{num}</span>}
     </button>
+  );
+}
+
+// ============= Patient Recalls Card =============
+import { useEffect } from "react";
+import { RefreshCcw, CheckCircle2 } from "lucide-react";
+import { RecallFormDialog } from "@/components/recall-form-dialog";
+import { listRecallsForPatient, createRecall, updateRecall, deleteRecall, completeRecall, type RecallRow, type RecallInsert } from "@/lib/recalls-api";
+
+function PatientRecalls({ patientId }: { patientId: string }) {
+  const [recalls, setRecalls] = useState<RecallRow[]>([]);
+  const [dialog, setDialog] = useState<{ open: boolean; editing: RecallRow | null }>({ open: false, editing: null });
+
+  const load = async () => setRecalls(await listRecallsForPatient(patientId));
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [patientId]);
+
+  const save = async (v: RecallInsert) => {
+    if (dialog.editing) await updateRecall(dialog.editing.id, v);
+    else await createRecall(v);
+    await load();
+  };
+  const del = async () => { if (dialog.editing) { await deleteRecall(dialog.editing.id); await load(); } };
+  const done = async (r: RecallRow) => { await completeRecall(r.id, r.interval_months); await load(); };
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between">
+        <SectionHeader title="Recalls" icon={RefreshCcw} />
+        <GhostButton icon={Plus} onClick={() => setDialog({ open: true, editing: null })}>Add</GhostButton>
+      </div>
+      {recalls.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No recalls set up.</p>
+      ) : (
+        <ul className="space-y-2">
+          {recalls.map((r) => {
+            const overdue = new Date(r.next_due_at) <= new Date();
+            return (
+              <li key={r.id} className="rounded-xl border border-border p-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{r.procedure}</div>
+                    <div className="text-[11px] text-muted-foreground">Every {r.interval_months} mo · Next: <span className={overdue ? "font-semibold text-red-700" : ""}>{r.next_due_at}</span></div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => done(r)} title="Mark done" className="rounded-full border border-border p-1.5 hover:bg-muted"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /></button>
+                    <button onClick={() => setDialog({ open: true, editing: r })} title="Edit" className="rounded-full border border-border p-1.5 hover:bg-muted"><Pencil className="h-3 w-3" /></button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <RecallFormDialog
+        open={dialog.open}
+        onClose={() => setDialog({ open: false, editing: null })}
+        onSubmit={save}
+        onDelete={dialog.editing ? del : undefined}
+        initial={dialog.editing}
+        patient_id={patientId}
+      />
+    </Card>
   );
 }

@@ -4,10 +4,18 @@ import { listPatients, type PatientRow } from "@/lib/patients-api";
 import {
   APPOINTMENT_STATUSES,
   STATUS_LABEL,
+  checkAppointmentConflict,
   type AppointmentInsert,
   type AppointmentRow,
   type AppointmentStatus,
 } from "@/lib/appointments-api";
+
+type Prefill = {
+  patient_id?: string;
+  procedure?: string;
+  provider?: string;
+  duration_min?: number;
+};
 
 type Props = {
   open: boolean;
@@ -17,6 +25,7 @@ type Props = {
   initial?: AppointmentRow | null;
   defaultStart?: Date;
   defaultChair?: number;
+  prefill?: Prefill;
 };
 
 const DURATIONS = [15, 30, 45, 60, 75, 90, 120];
@@ -35,10 +44,12 @@ export function AppointmentFormDialog({
   initial,
   defaultStart,
   defaultChair,
+  prefill,
 }: Props) {
   const [patients, setPatients] = useState<PatientRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conflictWarn, setConflictWarn] = useState<string | null>(null);
 
   const [patient_id, setPatientId] = useState("");
   const [chair, setChair] = useState<number>(1);
@@ -52,6 +63,7 @@ export function AppointmentFormDialog({
   useEffect(() => {
     if (!open) return;
     setError(null);
+    setConflictWarn(null);
     listPatients()
       .then(setPatients)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load patients"));
@@ -69,16 +81,16 @@ export function AppointmentFormDialog({
       setStatus(initial.status);
       setNotes(initial.notes ?? "");
     } else {
-      setPatientId("");
+      setPatientId(prefill?.patient_id ?? "");
       setChair(defaultChair ?? 1);
-      setProvider("");
-      setProcedure("");
+      setProvider(prefill?.provider ?? "");
+      setProcedure(prefill?.procedure ?? "");
       setStartAt(toLocalInput(defaultStart ?? nextHalfHour()));
-      setDuration(30);
+      setDuration(prefill?.duration_min ?? 30);
       setStatus("confirmed");
       setNotes("");
     }
-  }, [open, initial, defaultStart, defaultChair]);
+  }, [open, initial, defaultStart, defaultChair, prefill]);
 
   const patientOptions = useMemo(
     () =>
@@ -95,16 +107,29 @@ export function AppointmentFormDialog({
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setConflictWarn(null);
     try {
       if (!patient_id) throw new Error("Choose a patient");
+      const startIso = new Date(start_at).toISOString();
+      // Skip conflict check for cancelled/no-show — they don't block a chair.
+      if (status !== "cancelled" && status !== "no-show") {
+        const conflicts = await checkAppointmentConflict({
+          chair, provider, start_at: startIso, duration_min,
+          exclude_id: initial?.id,
+        });
+        if (conflicts.length > 0) {
+          const c = conflicts[0];
+          const t = new Date(c.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+          setConflictWarn(
+            `Conflicts with an existing ${c.conflict_type} booking at ${t} (${c.duration_min} min). Change the time, chair, or provider.`,
+          );
+          setBusy(false);
+          return;
+        }
+      }
       const payload: AppointmentInsert = {
-        patient_id,
-        chair,
-        provider,
-        procedure,
-        start_at: new Date(start_at).toISOString(),
-        duration_min,
-        status,
+        patient_id, chair, provider, procedure,
+        start_at: startIso, duration_min, status,
         notes: notes || null,
       };
       await onSubmit(payload);
@@ -189,6 +214,11 @@ export function AppointmentFormDialog({
             </div>
           </div>
 
+          {conflictWarn && (
+            <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              ⚠️ {conflictWarn}
+            </div>
+          )}
           {error && (
             <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
               {error}

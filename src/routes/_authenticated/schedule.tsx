@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Plus, Circle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, Plus, Circle, ListChecks } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell, Card, GhostButton, PrimaryButton, SectionHeader } from "@/components/app-shell";
 import { AppointmentFormDialog } from "@/components/appointment-form-dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +11,14 @@ import {
   deleteAppointment,
   endOfDay,
   listAppointmentsForRange,
+  rescheduleAppointment,
   startOfDay,
   updateAppointment,
   type AppointmentInsert,
   type AppointmentStatus,
   type AppointmentWithPatient,
 } from "@/lib/appointments-api";
+import { listWaitlist, markWaitlistScheduled, type WaitlistWithPatient } from "@/lib/waitlist-api";
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
@@ -49,12 +51,17 @@ const CHAIR_MEANING: Record<number, string> = {
 function SchedulePage() {
   const [date, setDate] = useState<Date>(() => new Date());
   const [items, setItems] = useState<AppointmentWithPatient[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistWithPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dragMsg, setDragMsg] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AppointmentWithPatient | null>(null);
   const [defaultStart, setDefaultStart] = useState<Date | undefined>();
   const [defaultChair, setDefaultChair] = useState<number | undefined>();
+  const [prefill, setPrefill] = useState<{ patient_id?: string; procedure?: string; provider?: string; duration_min?: number } | undefined>();
+  const [waitlistFill, setWaitlistFill] = useState<WaitlistWithPatient | null>(null);
+  const dragId = useRef<string | null>(null);
 
   const from = useMemo(() => startOfDay(date), [date]);
   const to = useMemo(() => endOfDay(date), [date]);
@@ -62,8 +69,12 @@ function SchedulePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await listAppointmentsForRange(from, to);
-      setItems(data);
+      const [appts, wl] = await Promise.all([
+        listAppointmentsForRange(from, to),
+        listWaitlist("active"),
+      ]);
+      setItems(appts);
+      setWaitlist(wl);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load appointments");
@@ -77,27 +88,22 @@ function SchedulePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from.getTime(), to.getTime()]);
 
-  // Realtime — reload on any change to today's window
   useEffect(() => {
     const channel = supabase
       .channel(`appts-${from.toISOString()}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "appointments" },
-        () => load(),
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "waitlist" }, () => load())
       .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [from.getTime()]);
 
-  const hours = Array.from({ length: 10 }, (_, i) => i + 8); // 8–17
+  const hours = Array.from({ length: 10 }, (_, i) => i + 8);
   const hourH = 60;
 
   const openNew = (chair?: number, hour?: number) => {
     setEditing(null);
+    setPrefill(undefined);
     if (hour != null) {
       const d = new Date(date);
       d.setHours(hour, 0, 0, 0);
@@ -109,8 +115,29 @@ function SchedulePage() {
     setDialogOpen(true);
   };
 
+  const openFromWaitlist = (w: WaitlistWithPatient, chair?: number, hour?: number) => {
+    setEditing(null);
+    setWaitlistFill(w);
+    setPrefill({
+      patient_id: w.patient_id,
+      procedure: w.procedure,
+      provider: w.preferred_provider ?? "",
+      duration_min: w.duration_min,
+    });
+    if (hour != null) {
+      const d = new Date(date);
+      d.setHours(hour, 0, 0, 0);
+      setDefaultStart(d);
+    } else {
+      setDefaultStart(undefined);
+    }
+    setDefaultChair(chair ?? w.preferred_chair ?? undefined);
+    setDialogOpen(true);
+  };
+
   const openEdit = (a: AppointmentWithPatient) => {
     setEditing(a);
+    setPrefill(undefined);
     setDefaultStart(undefined);
     setDefaultChair(undefined);
     setDialogOpen(true);
@@ -118,9 +145,27 @@ function SchedulePage() {
 
   const submit = async (values: AppointmentInsert) => {
     if (editing) {
+      const prevStatus = editing.status;
       await updateAppointment(editing.id, values);
+      // Auto-fill: if we just cancelled/no-showed an appointment, prompt waitlist
+      if (prevStatus !== values.status && (values.status === "cancelled" || values.status === "no-show")) {
+        const match = waitlist.find((w) => w.duration_min <= editing.duration_min &&
+          (!w.preferred_provider || w.preferred_provider === editing.provider) &&
+          (!w.preferred_chair || w.preferred_chair === editing.chair));
+        if (match) {
+          setTimeout(() => {
+            if (confirm(`Slot freed! Book "${match.patient_name}" (P${match.priority} · ${match.procedure}) into this ${editing.duration_min}-min slot?`)) {
+              openFromWaitlist(match, editing.chair, new Date(editing.start_at).getHours());
+            }
+          }, 100);
+        }
+      }
     } else {
       await createAppointment(values);
+      if (waitlistFill) {
+        await markWaitlistScheduled(waitlistFill.id);
+        setWaitlistFill(null);
+      }
     }
     await load();
   };
@@ -128,6 +173,29 @@ function SchedulePage() {
   const remove = async () => {
     if (!editing) return;
     await deleteAppointment(editing.id);
+    await load();
+  };
+
+  const onDropAt = async (chair: number, hour: number, minute: number) => {
+    const id = dragId.current;
+    dragId.current = null;
+    if (!id) return;
+    const appt = items.find((a) => a.id === id);
+    if (!appt) return;
+    const newStart = new Date(date);
+    newStart.setHours(hour, minute, 0, 0);
+    // Same slot? no-op
+    const cur = new Date(appt.start_at);
+    if (cur.getHours() === hour && cur.getMinutes() === minute && appt.chair === chair) return;
+    setDragMsg(null);
+    const res = await rescheduleAppointment(appt, chair, newStart);
+    if (!res.ok) {
+      const c = res.conflicts[0];
+      const t = new Date(c.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+      setDragMsg(`Can't move: ${c.conflict_type} conflict at ${t}.`);
+      setTimeout(() => setDragMsg(null), 3500);
+      return;
+    }
     await load();
   };
 
@@ -160,6 +228,9 @@ function SchedulePage() {
           {error && (
             <div className="border-b border-destructive/30 bg-destructive/10 px-4 py-2 text-xs text-destructive">{error}</div>
           )}
+          {dragMsg && (
+            <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-800">⚠️ {dragMsg}</div>
+          )}
           <div className="overflow-x-auto">
             <div className="relative min-w-[640px]">
               <div className="grid" style={{ gridTemplateColumns: `72px repeat(${CHAIRS.length}, minmax(140px, 1fr))` }}>
@@ -179,55 +250,74 @@ function SchedulePage() {
                       {h}:00
                     </div>
                     {CHAIRS.map((c) => (
-                      <button
+                      <div
                         key={c}
-                        type="button"
-                        onClick={() => openNew(c, h)}
-                        className="relative border-l border-t border-border transition hover:bg-primary-soft/40"
+                        className="relative border-l border-t border-border"
                         style={{ height: hourH }}
-                        aria-label={`New at ${h}:00 chair ${c}`}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-primary-soft/60"); }}
+                        onDragLeave={(e) => e.currentTarget.classList.remove("bg-primary-soft/60")}
+                        onDrop={(e) => {
+                          e.currentTarget.classList.remove("bg-primary-soft/60");
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const y = e.clientY - rect.top;
+                          const minute = y < hourH / 2 ? 0 : 30;
+                          onDropAt(c, h, minute);
+                        }}
                       >
-                        <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => openNew(c, h)}
+                          className="absolute inset-0 w-full transition hover:bg-primary-soft/40"
+                          aria-label={`New at ${h}:00 chair ${c}`}
+                        >
+                          <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-dashed border-border/60" />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 ))}
               </div>
 
-              {/* appointments layer */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0" style={{ height: hours.length * hourH }}>
                 <div className="grid h-full" style={{ gridTemplateColumns: `72px repeat(${CHAIRS.length}, minmax(140px, 1fr))` }}>
                   <div />
                   {CHAIRS.map((c) => (
                     <div key={c} className="relative">
-                      {items
-                        .filter((a) => a.chair === c)
-                        .map((a) => {
-                          const d = new Date(a.start_at);
-                          const startMins = d.getHours() * 60 + d.getMinutes();
-                          const top = ((startMins - 8 * 60) / 60) * hourH;
-                          const height = (a.duration_min / 60) * hourH;
-                          if (top < 0 || top > hours.length * hourH) return null;
-                          return (
-                            <button
-                              key={a.id}
-                              type="button"
-                              onClick={() => openEdit(a)}
-                              className={
-                                "pointer-events-auto absolute left-1 right-1 rounded-xl px-2 py-1.5 text-left text-[11px] transition hover:brightness-95 " +
-                                STATUS_TONE[a.status]
-                              }
-                              style={{ top, height: Math.max(height - 3, 20) }}
-                              title={`${a.patient_name} — ${a.procedure}`}
-                            >
-                              <div className="truncate font-semibold">
-                                {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
-                              </div>
-                              <div className="truncate opacity-80">{a.procedure}</div>
-                              <div className="mt-0.5 truncate text-[10px] opacity-70">{a.provider}</div>
-                            </button>
-                          );
-                        })}
+                      {items.filter((a) => a.chair === c).map((a) => {
+                        const d = new Date(a.start_at);
+                        const startMins = d.getHours() * 60 + d.getMinutes();
+                        const top = ((startMins - 8 * 60) / 60) * hourH;
+                        const height = (a.duration_min / 60) * hourH;
+                        if (top < 0 || top > hours.length * hourH) return null;
+                        const draggable = a.status !== "completed" && a.status !== "cancelled" && a.status !== "no-show";
+                        return (
+                          <div
+                            key={a.id}
+                            draggable={draggable}
+                            onDragStart={(e) => {
+                              dragId.current = a.id;
+                              e.dataTransfer.effectAllowed = "move";
+                              e.dataTransfer.setData("text/plain", a.id);
+                            }}
+                            onClick={() => openEdit(a)}
+                            role="button"
+                            tabIndex={0}
+                            className={
+                              "pointer-events-auto absolute left-1 right-1 rounded-xl px-2 py-1.5 text-left text-[11px] transition hover:brightness-95 " +
+                              (draggable ? "cursor-grab active:cursor-grabbing " : "cursor-pointer ") +
+                              STATUS_TONE[a.status]
+                            }
+                            style={{ top, height: Math.max(height - 3, 20) }}
+                            title={`${a.patient_name} — ${a.procedure}${draggable ? " (drag to reschedule)" : ""}`}
+                          >
+                            <div className="truncate font-semibold">
+                              {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                            </div>
+                            <div className="truncate opacity-80">{a.procedure}</div>
+                            <div className="mt-0.5 truncate text-[10px] opacity-70">{a.provider}</div>
+                          </div>
+                        );
+                      })}
                     </div>
                   ))}
                 </div>
@@ -239,12 +329,42 @@ function SchedulePage() {
           )}
           {!loading && items.length === 0 && (
             <div className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
-              No appointments for this day — click any empty slot to book.
+              No appointments for this day — click any empty slot to book. Drag existing appointments to reschedule.
             </div>
           )}
         </Card>
 
         <div className="space-y-4">
+          <Card>
+            <div className="flex items-center justify-between">
+              <SectionHeader title="Waitlist" />
+              <Link to="/waitlist" className="text-xs font-medium text-primary hover:underline">View all →</Link>
+            </div>
+            {waitlist.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No one waiting. <Link to="/waitlist" className="text-primary hover:underline">Add patients →</Link></p>
+            ) : (
+              <ul className="space-y-2">
+                {waitlist.slice(0, 5).map((w) => (
+                  <li key={w.id}>
+                    <button
+                      onClick={() => openFromWaitlist(w)}
+                      className="w-full rounded-xl border border-border p-2.5 text-left transition hover:border-primary hover:bg-primary-soft/30"
+                    >
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">{w.patient_name}</span>
+                        <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent-foreground">P{w.priority}</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">{w.procedure} · {w.duration_min} min</div>
+                    </button>
+                  </li>
+                ))}
+                {waitlist.length > 5 && (
+                  <li className="text-center text-[11px] text-muted-foreground">+ {waitlist.length - 5} more</li>
+                )}
+              </ul>
+            )}
+          </Card>
+
           <Card>
             <SectionHeader title="Legend" />
             <ul className="space-y-2 text-sm">
@@ -271,12 +391,13 @@ function SchedulePage() {
 
       <AppointmentFormDialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => { setDialogOpen(false); setWaitlistFill(null); setPrefill(undefined); }}
         onSubmit={submit}
         onDelete={editing ? remove : undefined}
         initial={editing}
         defaultStart={defaultStart}
         defaultChair={defaultChair}
+        prefill={prefill}
       />
     </AppShell>
   );

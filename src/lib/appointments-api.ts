@@ -80,3 +80,49 @@ export async function deleteAppointment(id: string): Promise<void> {
   const { error } = await supabase.from("appointments").delete().eq("id", id);
   if (error) throw error;
 }
+
+export type ConflictRow = {
+  id: string;
+  patient_id: string;
+  start_at: string;
+  duration_min: number;
+  chair: number;
+  provider: string;
+  conflict_type: "chair" | "provider" | "chair+provider";
+};
+
+export async function checkAppointmentConflict(args: {
+  chair: number;
+  provider: string;
+  start_at: string;
+  duration_min: number;
+  exclude_id?: string;
+}): Promise<ConflictRow[]> {
+  const { data, error } = await supabase.rpc("check_appointment_conflict", {
+    _chair: args.chair,
+    _provider: args.provider,
+    _start_at: args.start_at,
+    _duration_min: args.duration_min,
+    _exclude_id: args.exclude_id,
+  });
+  if (error) throw error;
+  return (data ?? []) as ConflictRow[];
+}
+
+/** Reschedule to a new chair/start_at, checking conflicts first. */
+export async function rescheduleAppointment(
+  appt: Pick<AppointmentRow, "id" | "provider" | "duration_min">,
+  newChair: number,
+  newStart: Date,
+): Promise<{ ok: true } | { ok: false; conflicts: ConflictRow[] }> {
+  const conflicts = await checkAppointmentConflict({
+    chair: newChair,
+    provider: appt.provider,
+    start_at: newStart.toISOString(),
+    duration_min: appt.duration_min,
+    exclude_id: appt.id,
+  });
+  if (conflicts.length > 0) return { ok: false, conflicts };
+  await updateAppointment(appt.id, { chair: newChair, start_at: newStart.toISOString() });
+  return { ok: true };
+}

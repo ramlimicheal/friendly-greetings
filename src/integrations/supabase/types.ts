@@ -157,6 +157,53 @@ export type Database = {
         }
         Relationships: []
       }
+      recalls: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          interval_months: number
+          last_completed_at: string | null
+          next_due_at: string
+          notes: string | null
+          patient_id: string
+          procedure: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          interval_months?: number
+          last_completed_at?: string | null
+          next_due_at: string
+          notes?: string | null
+          patient_id: string
+          procedure?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          interval_months?: number
+          last_completed_at?: string | null
+          next_due_at?: string
+          notes?: string | null
+          patient_id?: string
+          procedure?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recalls_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -178,11 +225,82 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_min: number
+          id: string
+          notes: string | null
+          patient_id: string
+          preferred_chair: number | null
+          preferred_provider: string | null
+          priority: number
+          procedure: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_min?: number
+          id?: string
+          notes?: string | null
+          patient_id: string
+          preferred_chair?: number | null
+          preferred_provider?: string | null
+          priority?: number
+          procedure: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_min?: number
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          preferred_chair?: number | null
+          preferred_provider?: string | null
+          priority?: number
+          procedure?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_appointment_conflict: {
+        Args: {
+          _chair: number
+          _duration_min: number
+          _exclude_id?: string
+          _provider: string
+          _start_at: string
+        }
+        Returns: {
+          chair: number
+          conflict_type: string
+          duration_min: number
+          id: string
+          patient_id: string
+          provider: string
+          start_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

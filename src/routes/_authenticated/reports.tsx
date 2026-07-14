@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, DollarSign, TrendingUp, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Download, DollarSign, TrendingUp, Users, Flame } from "lucide-react";
 import { AppShell, Card, GhostButton, SectionHeader } from "@/components/app-shell";
 import { revenueLast30, procedureMix } from "@/lib/mock-data";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
       { title: "Reports — Enamel Dental Clinic" },
-      { name: "description", content: "Revenue, production, and patient metrics for the practice." },
+      { name: "description", content: "Revenue, production, chair utilization, and patient metrics for the practice." },
     ],
   }),
   component: ReportsPage,
@@ -32,6 +34,10 @@ function ReportsPage() {
         <ProductionByProvider />
       </div>
 
+      <div className="mt-4">
+        <ChairHeatmap />
+      </div>
+
       <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <ProcedureMixCard />
         <NewPatientsCard />
@@ -40,6 +46,103 @@ function ReportsPage() {
     </AppShell>
   );
 }
+
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+const CHAIRS = [1, 2, 3, 4];
+
+function heatColor(intensity: number): string {
+  // 0..1 → light-primary → strong
+  if (intensity === 0) return "bg-muted";
+  if (intensity < 0.25) return "bg-primary/15";
+  if (intensity < 0.5) return "bg-primary/35";
+  if (intensity < 0.75) return "bg-primary/60";
+  return "bg-primary";
+}
+
+function ChairHeatmap() {
+  // grid: [chair][dayOfWeek][hour] = minutes booked in last 30 days
+  const [grid, setGrid] = useState<Record<number, Record<number, Record<number, number>>>>({});
+  const [loading, setLoading] = useState(true);
+  const [maxVal, setMaxVal] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const from = new Date();
+      from.setDate(from.getDate() - 30);
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("start_at, duration_min, chair, status")
+        .gte("start_at", from.toISOString())
+        .not("status", "in", "(cancelled,no-show)");
+      if (error) { setLoading(false); return; }
+      const g: Record<number, Record<number, Record<number, number>>> = {};
+      let mx = 0;
+      for (const r of data ?? []) {
+        const d = new Date(r.start_at as string);
+        const dow = (d.getDay() + 6) % 7; // Mon=0..Sun=6
+        const hr = d.getHours();
+        if (hr < 8 || hr > 17) continue;
+        g[r.chair] ??= {};
+        g[r.chair][dow] ??= {};
+        g[r.chair][dow][hr] = (g[r.chair][dow][hr] ?? 0) + (r.duration_min as number);
+        if (g[r.chair][dow][hr] > mx) mx = g[r.chair][dow][hr];
+      }
+      setGrid(g);
+      setMaxVal(mx);
+      setLoading(false);
+    })();
+  }, []);
+
+  return (
+    <Card>
+      <SectionHeader title="Chair utilization heatmap" icon={Flame} />
+      <p className="mb-3 text-xs text-muted-foreground">Booked minutes per hour, last 30 days. Darker = busier.</p>
+      {loading ? (
+        <p className="text-xs text-muted-foreground">Loading…</p>
+      ) : maxVal === 0 ? (
+        <p className="text-xs text-muted-foreground">No appointments yet in the last 30 days.</p>
+      ) : (
+        <div className="space-y-4">
+          {CHAIRS.map((chair) => (
+            <div key={chair}>
+              <div className="mb-1 text-xs font-semibold">Chair {chair}</div>
+              <div className="overflow-x-auto">
+                <div className="inline-grid gap-1" style={{ gridTemplateColumns: `48px repeat(${HOURS.length}, 32px)` }}>
+                  <div />
+                  {HOURS.map((h) => (<div key={h} className="text-center text-[10px] text-muted-foreground">{h}</div>))}
+                  {DAYS.map((day, di) => (
+                    <div key={day} className="contents">
+                      <div className="flex items-center text-[10px] font-medium text-muted-foreground">{day}</div>
+                      {HOURS.map((h) => {
+                        const v = grid[chair]?.[di]?.[h] ?? 0;
+                        const intensity = maxVal > 0 ? v / maxVal : 0;
+                        return (
+                          <div key={h} className={"h-6 rounded-sm " + heatColor(intensity)} title={`${day} ${h}:00 · ${v} min`} />
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-2 text-[10px] text-muted-foreground">
+            <span>Less</span>
+            <span className="h-3 w-4 rounded-sm bg-muted" />
+            <span className="h-3 w-4 rounded-sm bg-primary/15" />
+            <span className="h-3 w-4 rounded-sm bg-primary/35" />
+            <span className="h-3 w-4 rounded-sm bg-primary/60" />
+            <span className="h-3 w-4 rounded-sm bg-primary" />
+            <span>More</span>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 
 function Stat({ icon: Icon, label, value, delta }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; delta: string }) {
   return (
