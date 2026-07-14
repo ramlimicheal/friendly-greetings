@@ -269,7 +269,12 @@ function Bars({ data, full = false, muted = false }: { data: number[]; full?: bo
 
 /* ---------- Today's schedule (live now-line) ---------- */
 
-function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
+function apptMins(a: AppointmentWithPatient): number {
+  const d = new Date(a.start_at);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function TodayScheduleStrip({ nowMins, items }: { nowMins: number; items: AppointmentWithPatient[] }) {
   const hours = Array.from({ length: CLINIC_CLOSE - CLINIC_OPEN + 1 }, (_, i) => CLINIC_OPEN + i);
   const chairs = [1, 2, 3, 4] as const;
   const rowH = 44;
@@ -279,12 +284,14 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
   const nowLeft = ((nowMins - CLINIC_OPEN * 60) / 60) * hourW;
   const showNow = nowMins >= CLINIC_OPEN * 60 && nowMins <= CLINIC_CLOSE * 60;
 
-
   const toneMap: Record<string, string> = {
+    unconfirmed: "bg-amber-100 text-amber-800",
     confirmed: "bg-primary-soft text-accent-foreground",
     arrived: "bg-primary text-primary-foreground",
     "in-chair": "bg-emerald-500 text-primary-foreground",
-    unconfirmed: "bg-amber-100 text-amber-800",
+    completed: "bg-muted text-muted-foreground",
+    cancelled: "bg-red-100 text-red-700 line-through",
+    "no-show": "bg-red-100 text-red-700",
   };
 
   return (
@@ -332,26 +339,28 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
                   <span className="truncate">Ch {c}</span>
                 </div>
                 <div className="relative border-t border-border" style={{ height: rowH }}>
-                  {todaysAppointments
+                  {items
                     .filter((a) => a.chair === c)
                     .map((a) => {
-                      const start = toMins(a.start);
+                      const start = apptMins(a);
                       const left = ((start - CLINIC_OPEN * 60) / 60) * hourW;
-                      const width = (a.duration / 60) * hourW;
-                      const past = start + a.duration <= nowMins;
+                      const width = (a.duration_min / 60) * hourW;
+                      const past = start + a.duration_min <= nowMins;
+                      if (left < 0 || left > totalW) return null;
                       return (
-                        <div
+                        <Link
                           key={a.id}
+                          to="/schedule"
                           className={
                             "absolute top-1 bottom-1 truncate rounded-lg px-2 py-1 text-[11px] font-medium " +
                             toneMap[a.status] +
                             (past ? " opacity-55" : "")
                           }
                           style={{ left, width: Math.max(width - 3, 36) }}
-                          title={`${a.patient} — ${a.procedure}`}
+                          title={`${a.patient_name} — ${a.procedure}`}
                         >
-                          {a.start} · {a.patient}
-                        </div>
+                          {new Date(a.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {a.patient_name}
+                        </Link>
                       );
                     })}
                 </div>
@@ -360,25 +369,29 @@ function TodayScheduleStrip({ nowMins }: { nowMins: number }) {
           </div>
         </div>
       </div>
-
+      {items.length === 0 && (
+        <div className="mt-3 rounded-2xl bg-muted/60 px-4 py-6 text-center text-xs text-muted-foreground">
+          No appointments booked for today. <Link to="/schedule" className="font-medium text-primary hover:underline">Open schedule</Link> to add one.
+        </div>
+      )}
     </Card>
   );
 }
 
-/* ---------- Right-now snapshot (replaces "Today at a glance") ---------- */
+/* ---------- Right-now snapshot ---------- */
 
-function RightNowSnapshot({ nowMins }: { nowMins: number }) {
-  const inChair = todaysAppointments.filter((a) => a.status === "in-chair");
-  const arrived = todaysAppointments.filter((a) => a.status === "arrived");
-  const nextUp = todaysAppointments
-    .filter((a) => toMins(a.start) >= nowMins)
-    .sort((a, b) => toMins(a.start) - toMins(b.start))[0];
-  const runningLate = todaysAppointments.find(
-    (a) => a.status === "confirmed" && toMins(a.start) < nowMins - 5,
+function RightNowSnapshot({ nowMins, items }: { nowMins: number; items: AppointmentWithPatient[] }) {
+  const inChair = items.filter((a) => a.status === "in-chair");
+  const arrived = items.filter((a) => a.status === "arrived");
+  const nextUp = items
+    .filter((a) => apptMins(a) >= nowMins && !["cancelled", "no-show", "completed"].includes(a.status))
+    .sort((a, b) => apptMins(a) - apptMins(b))[0];
+  const runningLate = items.find(
+    (a) => a.status === "confirmed" && apptMins(a) < nowMins - 5,
   );
 
   const stats = [
-    { label: "Booked", value: todaysAppointments.length, tone: "text-foreground" },
+    { label: "Booked", value: items.length, tone: "text-foreground" },
     { label: "Arrived", value: arrived.length, tone: "text-primary" },
     { label: "In chair", value: inChair.length, tone: "text-primary" },
     { label: "Late", value: runningLate ? 1 : 0, tone: runningLate ? "text-red-600" : "text-muted-foreground" },
@@ -414,12 +427,12 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <Stethoscope className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="truncate text-sm font-medium">{a.patient}</span>
+                <span className="truncate text-sm font-medium">{a.patient_name}</span>
               </div>
               <div className="truncate text-xs text-muted-foreground">Chair {a.chair} · {a.procedure}</div>
             </div>
             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-              {Math.max(0, nowMins - toMins(a.start))}m in
+              {Math.max(0, nowMins - apptMins(a))}m in
             </span>
           </li>
         ))}
@@ -428,11 +441,11 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
           <li className="flex list-none items-center justify-between rounded-2xl bg-primary-soft/60 px-3 py-2.5">
             <div className="min-w-0">
               <div className="text-[10px] font-semibold uppercase tracking-wider text-accent-foreground">Next up</div>
-              <div className="truncate text-sm font-medium">{nextUp.patient}</div>
+              <div className="truncate text-sm font-medium">{nextUp.patient_name}</div>
               <div className="truncate text-xs text-muted-foreground">Chair {nextUp.chair} · {nextUp.procedure}</div>
             </div>
             <span className="rounded-full bg-card px-2.5 py-0.5 text-[11px] font-semibold text-foreground ring-1 ring-border">
-              in {Math.max(0, toMins(nextUp.start) - nowMins)}m
+              in {Math.max(0, apptMins(nextUp) - nowMins)}m
             </span>
           </li>
         )}
@@ -443,19 +456,25 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
               <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-800">
                 <AlertTriangle className="h-3 w-3" /> Running late
               </div>
-              <div className="truncate text-sm font-medium">{runningLate.patient}</div>
-              <div className="truncate text-xs text-muted-foreground">{runningLate.start} · {runningLate.procedure}</div>
+              <div className="truncate text-sm font-medium">{runningLate.patient_name}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                {new Date(runningLate.start_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })} · {runningLate.procedure}
+              </div>
             </div>
             <button className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground hover:opacity-90">
               <Phone className="h-3 w-3" /> Call
             </button>
           </li>
         )}
+
+        {items.length === 0 && (
+          <li className="rounded-2xl bg-muted/50 px-3 py-4 text-center text-xs text-muted-foreground">Nothing booked yet today.</li>
+        )}
       </ul>
     </Card>
-
   );
 }
+
 
 /* ---------- Action queues ---------- */
 
