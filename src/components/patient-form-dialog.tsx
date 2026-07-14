@@ -28,6 +28,8 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [allergiesInput, setAllergiesInput] = useState("");
+  const [conditionsInput, setConditionsInput] = useState("");
+  const [medicationsInput, setMedicationsInput] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -44,6 +46,8 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
     setAddress(initial?.address ?? "");
     setNotes(initial?.notes ?? "");
     setAllergiesInput((initial?.allergies ?? []).join(", "));
+    setConditionsInput(((initial as any)?.medical_conditions ?? []).join(", "));
+    setMedicationsInput(((initial as any)?.medications ?? []).join(", "));
   }, [open, initial]);
 
   if (!open) return null;
@@ -53,10 +57,10 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
     setBusy(true);
     setError(null);
     try {
-      const allergies = allergiesInput
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const toArr = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
+      const allergies = toArr(allergiesInput);
+      const medical_conditions = toArr(conditionsInput);
+      const medications = toArr(medicationsInput);
       const payload = {
         full_name,
         date_of_birth: date_of_birth || null,
@@ -69,6 +73,8 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
         address: address || null,
         notes: notes || null,
         allergies,
+        medical_conditions,
+        medications,
         ...(chart_no ? { chart_no } : {}),
       } as PatientInsert;
 
@@ -132,6 +138,14 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
             <Field label="Allergies (comma-separated)">
               <input value={allergiesInput} onChange={(e) => setAllergiesInput(e.target.value)} className={inputCls} placeholder="Penicillin, Latex" />
             </Field>
+            <Field label="Medical conditions (comma-separated)">
+              <input value={conditionsInput} onChange={(e) => setConditionsInput(e.target.value)} className={inputCls} placeholder="Diabetes, Hypertension" />
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Medications (comma-separated)">
+                <input value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} className={inputCls} placeholder="Metformin 500mg, Lisinopril 10mg" />
+              </Field>
+            </div>
             <div className="sm:col-span-2">
               <Field label="Address">
                 <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />

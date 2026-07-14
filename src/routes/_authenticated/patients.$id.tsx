@@ -29,6 +29,8 @@ import {
   type PatientRow,
 } from "@/lib/patients-api";
 import { Odontogram } from "@/components/odontogram";
+import { TreatmentPlanPanel } from "@/components/treatment-plan-panel";
+import { ClinicalNotesPanel } from "@/components/clinical-notes-panel";
 
 export const Route = createFileRoute("/_authenticated/patients/$id")({
   head: () => ({
@@ -114,6 +116,7 @@ function PatientDetail() {
         </>
       }
     >
+      <MedicalAlertBanner patient={patient} />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_1fr]">
         {/* left rail */}
         <div className="space-y-4">
@@ -142,18 +145,23 @@ function PatientDetail() {
           </Card>
 
           <Card>
-            <SectionHeader title="Alerts" icon={AlertTriangle} />
-            {patient.allergies && patient.allergies.length > 0 ? (
-              <ul className="space-y-2">
-                {patient.allergies.map((a) => (
-                  <li key={a} className="flex items-center justify-between rounded-2xl bg-red-50 px-3 py-2 text-sm ring-1 ring-red-100">
-                    <span className="font-medium text-red-700">Allergy · {a}</span>
-                    <Pill tone="danger">Avoid</Pill>
-                  </li>
-                ))}
-              </ul>
+            <SectionHeader title="Medical alerts" icon={AlertTriangle} />
+            {(patient.allergies?.length ?? 0) === 0 &&
+             ((patient as any).medical_conditions?.length ?? 0) === 0 &&
+             ((patient as any).medications?.length ?? 0) === 0 ? (
+              <p className="text-sm text-muted-foreground">No allergies, conditions, or medications on file.</p>
             ) : (
-              <p className="text-sm text-muted-foreground">No known allergies on file.</p>
+              <div className="space-y-3">
+                {patient.allergies && patient.allergies.length > 0 && (
+                  <AlertGroup title="Allergies" tone="danger" items={patient.allergies} />
+                )}
+                {((patient as any).medical_conditions ?? []).length > 0 && (
+                  <AlertGroup title="Conditions" tone="warn" items={(patient as any).medical_conditions} />
+                )}
+                {((patient as any).medications ?? []).length > 0 && (
+                  <AlertGroup title="Medications" tone="info" items={(patient as any).medications} />
+                )}
+              </div>
             )}
             {patient.notes && (
               <div className="mt-3 rounded-2xl bg-muted/60 p-3 text-xs text-muted-foreground">
@@ -193,8 +201,8 @@ function PatientDetail() {
             <div className="p-6">
               {tab === "overview" && <OverviewTab patient={patient} />}
               {tab === "chart" && <Odontogram patientId={patient.id} />}
-              {tab === "plan" && <ComingSoon what="Treatment plan" />}
-              {tab === "history" && <ComingSoon what="Clinical history" />}
+              {tab === "plan" && <TreatmentPlanPanel patientId={patient.id} />}
+              {tab === "history" && <ClinicalNotesPanel patientId={patient.id} />}
               {tab === "billing" && <ComingSoon what="Billing" />}
             </div>
           </Card>
@@ -251,6 +259,44 @@ function Info({ icon: Icon, label }: { icon: React.ComponentType<{ className?: s
       <Icon className="mt-0.5 h-4 w-4 text-muted-foreground" />
       <span className="min-w-0 break-words">{label}</span>
     </li>
+  );
+}
+
+function AlertGroup({ title, tone, items }: { title: string; tone: "danger" | "warn" | "info"; items: string[] }) {
+  const styles = tone === "danger"
+    ? "bg-red-50 ring-red-100 text-red-700"
+    : tone === "warn"
+      ? "bg-amber-50 ring-amber-100 text-amber-800"
+      : "bg-sky-50 ring-sky-100 text-sky-800";
+  return (
+    <div>
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{title}</div>
+      <ul className="space-y-1.5">
+        {items.map((x) => (
+          <li key={x} className={`rounded-xl px-3 py-1.5 text-xs font-medium ring-1 ${styles}`}>{x}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function MedicalAlertBanner({ patient }: { patient: PatientRow }) {
+  const allergies = patient.allergies ?? [];
+  const conditions = (patient as any).medical_conditions ?? [];
+  const meds = (patient as any).medications ?? [];
+  if (allergies.length + conditions.length + meds.length === 0) return null;
+  const chips: { label: string; tone: string }[] = [];
+  allergies.forEach((a: string) => chips.push({ label: `Allergy: ${a}`, tone: "bg-red-600 text-white" }));
+  conditions.forEach((c: string) => chips.push({ label: c, tone: "bg-amber-500 text-white" }));
+  meds.forEach((m: string) => chips.push({ label: `Rx: ${m}`, tone: "bg-sky-600 text-white" }));
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border-l-4 border-red-600 bg-red-50 px-4 py-3 ring-1 ring-red-100">
+      <AlertTriangle className="h-4 w-4 text-red-600" />
+      <span className="text-sm font-semibold text-red-800">Medical alerts:</span>
+      {chips.map((c, i) => (
+        <span key={i} className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${c.tone}`}>{c.label}</span>
+      ))}
+    </div>
   );
 }
 
