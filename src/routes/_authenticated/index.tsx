@@ -51,10 +51,6 @@ export const Route = createFileRoute("/_authenticated/")({
 const CLINIC_OPEN = 8;
 const CLINIC_CLOSE = 18;
 
-function toMins(hhmm: string) {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-}
 function fmt(mins: number) {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
