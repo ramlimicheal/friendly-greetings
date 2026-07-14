@@ -184,27 +184,30 @@ export const getInvitationByToken = createServerFn({ method: "GET" })
     return { valid: true as const, email: row.email, role: row.role as AppRole };
   });
 
+export type AuditRow = {
+  id: string;
+  user_id: string | null;
+  action: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  created_at: string;
+  actor_name: string | null;
+  actor_email: string | null;
+};
+
 export const listAuditLog = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<AuditRow[]> => {
     await assertAdmin(context.supabase, context.userId);
     const { data: logs, error } = await context.supabase
       .from("audit_log")
-      .select("id, user_id, action, entity_type, entity_id, metadata, created_at")
+      .select("id, user_id, action, entity_type, entity_id, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
-    const rows = (logs ?? []) as Array<{
-      id: string;
-      user_id: string | null;
-      action: string;
-      entity_type: string | null;
-      entity_id: string | null;
-      metadata: unknown;
-      created_at: string;
-    }>;
+    const rows = logs ?? [];
     const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean))) as string[];
-    let nameMap = new Map<string, { full_name: string | null; email: string | null }>();
+    const nameMap = new Map<string, { full_name: string | null; email: string | null }>();
     if (userIds.length > 0) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: profs } = await supabaseAdmin
@@ -214,9 +217,15 @@ export const listAuditLog = createServerFn({ method: "GET" })
       (profs ?? []).forEach((p) => nameMap.set(p.id, { full_name: p.full_name, email: p.email }));
     }
     return rows.map((r) => ({
-      ...r,
+      id: r.id,
+      user_id: r.user_id,
+      action: r.action,
+      entity_type: r.entity_type,
+      entity_id: r.entity_id,
+      created_at: r.created_at,
       actor_name: r.user_id ? nameMap.get(r.user_id)?.full_name ?? null : null,
       actor_email: r.user_id ? nameMap.get(r.user_id)?.email ?? null : null,
     }));
   });
+
 
