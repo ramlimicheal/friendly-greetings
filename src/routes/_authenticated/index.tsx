@@ -364,7 +364,7 @@ function RightNowSnapshot({ nowMins }: { nowMins: number }) {
         ))}
       </div>
 
-      <div className="mt-5 space-y-2">
+      <ul className="mt-5 space-y-2">
         {inChair.map((a) => (
           <li key={a.id} className="flex list-none items-center justify-between rounded-2xl bg-muted/60 px-3 py-2.5">
             <div className="min-w-0">
