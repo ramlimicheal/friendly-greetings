@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 
-const NAV = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/schedule", label: "Schedule", icon: CalendarDays },
@@ -22,7 +23,8 @@ const NAV = [
   { to: "/billing", label: "Billing", icon: Receipt },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/reports", label: "Reports", icon: BarChart3 },
-] as const;
+];
+
 
 export function AppShell({
   children,
