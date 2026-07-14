@@ -144,18 +144,23 @@ function PatientDetail() {
           </Card>
 
           <Card>
-            <SectionHeader title="Alerts" icon={AlertTriangle} />
-            {patient.allergies && patient.allergies.length > 0 ? (
-              <ul className="space-y-2">
-                {patient.allergies.map((a) => (
-                  <li key={a} className="flex items-center justify-between rounded-2xl bg-red-50 px-3 py-2 text-sm ring-1 ring-red-100">
-                    <span className="font-medium text-red-700">Allergy · {a}</span>
-                    <Pill tone="danger">Avoid</Pill>
-                  </li>
-                ))}
-              </ul>
+            <SectionHeader title="Medical alerts" icon={AlertTriangle} />
+            {(patient.allergies?.length ?? 0) === 0 &&
+             ((patient as any).medical_conditions?.length ?? 0) === 0 &&
+             ((patient as any).medications?.length ?? 0) === 0 ? (
+              <p className="text-sm text-muted-foreground">No allergies, conditions, or medications on file.</p>
             ) : (
-              <p className="text-sm text-muted-foreground">No known allergies on file.</p>
+              <div className="space-y-3">
+                {patient.allergies && patient.allergies.length > 0 && (
+                  <AlertGroup title="Allergies" tone="danger" items={patient.allergies} />
+                )}
+                {((patient as any).medical_conditions ?? []).length > 0 && (
+                  <AlertGroup title="Conditions" tone="warn" items={(patient as any).medical_conditions} />
+                )}
+                {((patient as any).medications ?? []).length > 0 && (
+                  <AlertGroup title="Medications" tone="info" items={(patient as any).medications} />
+                )}
+              </div>
             )}
             {patient.notes && (
               <div className="mt-3 rounded-2xl bg-muted/60 p-3 text-xs text-muted-foreground">
