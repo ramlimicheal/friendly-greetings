@@ -65,6 +65,7 @@ function SchedulePage() {
   const [prefill, setPrefill] = useState<{ patient_id?: string; procedure?: string; provider?: string; duration_min?: number } | undefined>();
   const [waitlistFill, setWaitlistFill] = useState<WaitlistWithPatient | null>(null);
   const dragId = useRef<string | null>(null);
+  const [history, setHistory] = useState<{ patient_id: string; start_at: string; status: AppointmentStatus }[]>([]);
 
   const from = useMemo(() => startOfDay(date), [date]);
   const to = useMemo(() => endOfDay(date), [date]);
@@ -72,12 +73,14 @@ function SchedulePage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [appts, wl] = await Promise.all([
+      const [appts, wl, hist] = await Promise.all([
         listAppointmentsForRange(from, to),
         listWaitlist("active"),
+        listAppointmentHistory(180),
       ]);
       setItems(appts);
       setWaitlist(wl);
+      setHistory(hist);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load appointments");
@@ -85,6 +88,7 @@ function SchedulePage() {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     load();
