@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      patients: {
+        Row: {
+          address: string | null
+          allergies: string[]
+          balance: number
+          chart_no: string
+          created_at: string
+          created_by: string | null
+          date_of_birth: string | null
+          email: string | null
+          full_name: string
+          id: string
+          insurance: string | null
+          last_visit_at: string | null
+          next_visit_at: string | null
+          notes: string | null
+          phone: string | null
+          primary_dentist: string | null
+          sex: Database["public"]["Enums"]["patient_sex"] | null
+          status: Database["public"]["Enums"]["patient_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          allergies?: string[]
+          balance?: number
+          chart_no: string
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          insurance?: string | null
+          last_visit_at?: string | null
+          next_visit_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_dentist?: string | null
+          sex?: Database["public"]["Enums"]["patient_sex"] | null
+          status?: Database["public"]["Enums"]["patient_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          allergies?: string[]
+          balance?: number
+          chart_no?: string
+          created_at?: string
+          created_by?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          insurance?: string | null
+          last_visit_at?: string | null
+          next_visit_at?: string | null
+          notes?: string | null
+          phone?: string | null
+          primary_dentist?: string | null
+          sex?: Database["public"]["Enums"]["patient_sex"] | null
+          status?: Database["public"]["Enums"]["patient_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -74,6 +140,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "dentist" | "hygienist" | "front_desk"
+      patient_sex: "F" | "M" | "Other"
+      patient_status: "Active" | "Recall" | "Overdue" | "New"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -202,6 +270,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "dentist", "hygienist", "front_desk"],
+      patient_sex: ["F", "M", "Other"],
+      patient_status: ["Active", "Recall", "Overdue", "New"],
     },
   },
 } as const
