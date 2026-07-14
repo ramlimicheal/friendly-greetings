@@ -62,25 +62,59 @@ function fmt(mins: number) {
 }
 
 function DashboardPage() {
-  // Live "now" — pinned to 10:24 for demo, ticks every minute after mount.
-  const [nowMins, setNowMins] = useState(10 * 60 + 24);
+  const navigate = useNavigate();
+  const [nowMins, setNowMins] = useState(() => {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  });
   useEffect(() => {
-    const t = setInterval(() => setNowMins((n) => n + 1), 60_000);
+    const t = setInterval(() => {
+      const d = new Date();
+      setNowMins(d.getHours() * 60 + d.getMinutes());
+    }, 60_000);
     return () => clearInterval(t);
   }, []);
 
+  // Real appointments for today, with live realtime updates
+  const [today, setToday] = useState<AppointmentWithPatient[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      const now = new Date();
+      try {
+        const data = await listAppointmentsForRange(startOfDay(now), endOfDay(now));
+        setToday(data);
+      } catch {
+        setToday([]);
+      }
+    };
+    load();
+    const channel = supabase
+      .channel("dashboard-appts")
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => load())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const revenueToday = 8420;
-  const patientsToday = todaysAppointments.length;
+  const patientsToday = today.length;
   const outstanding = invoices.filter((i) => i.status !== "Paid").reduce((s, i) => s + i.amount, 0);
+
+  const arrivedCount = today.filter((a) => ["arrived", "in-chair", "completed"].includes(a.status)).length;
+  const inChairCount = today.filter((a) => a.status === "in-chair").length;
+  const unconfirmedCount = today.filter((a) => a.status === "unconfirmed").length;
+
+  const subtitle = `${new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} · ${today.length} appointments today`;
 
   return (
     <AppShell
       title="Clinic Overview"
-      subtitle="Tuesday, October 14 · 4 chairs · 2 dentists on the floor"
+      subtitle={subtitle}
       actions={
         <>
           <GhostButton icon={Share2}>Export report</GhostButton>
-          <PrimaryButton icon={Plus}>New appointment</PrimaryButton>
+          <PrimaryButton icon={Plus} onClick={() => navigate({ to: "/schedule" })}>New appointment</PrimaryButton>
         </>
       }
     >
@@ -93,7 +127,7 @@ function DashboardPage() {
           delta="+12%"
           up
           spark={<Bars data={[3, 5, 4, 6, 7, 5, 8, 6, 9, 7, 8, 10, 9, 12]} />}
-          caption={<>3 arrived · 1 in chair · 2 no-show risk</>}
+          caption={<>{arrivedCount} arrived · {inChairCount} in chair · {unconfirmedCount} unconfirmed</>}
           icon={Users}
         />
         <Kpi
@@ -130,8 +164,8 @@ function DashboardPage() {
 
       {/* MID ROW — live schedule + right-now snapshot */}
       <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <TodayScheduleStrip nowMins={nowMins} />
-        <RightNowSnapshot nowMins={nowMins} />
+        <TodayScheduleStrip nowMins={nowMins} items={today} />
+        <RightNowSnapshot nowMins={nowMins} items={today} />
       </section>
 
       {/* ACTION QUEUES */}
@@ -150,6 +184,8 @@ function DashboardPage() {
     </AppShell>
   );
 }
+
+
 
 /* ---------- KPI widgets ---------- */
 
