@@ -103,7 +103,7 @@ export async function checkAppointmentConflict(args: {
     _provider: args.provider,
     _start_at: args.start_at,
     _duration_min: args.duration_min,
-    _exclude_id: args.exclude_id ?? null,
+    _exclude_id: args.exclude_id,
   });
   if (error) throw error;
   return (data ?? []) as ConflictRow[];
