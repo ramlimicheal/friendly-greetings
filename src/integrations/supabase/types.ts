@@ -67,6 +67,69 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          metadata: Json
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           address: string | null
@@ -137,22 +200,28 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -300,6 +369,13 @@ export type Database = {
           provider: string
           start_at: string
         }[]
+      }
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
