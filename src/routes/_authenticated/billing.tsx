@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, DollarSign, FileText, ShieldCheck, Receipt, Printer, Edit3, Wallet, AlertCircle, ArrowDownRight } from "lucide-react";
+import { Plus, DollarSign, FileText, ShieldCheck, Receipt, Printer, Edit3, Wallet, AlertCircle, ArrowDownRight, Sparkles } from "lucide-react";
+import { BenefitsExtractorDialog } from "@/components/benefits-extractor-dialog";
+
 import { AppShell, Card, GhostButton, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
 import {
   agingBuckets,
