@@ -10,6 +10,7 @@ import {
   createAppointment,
   deleteAppointment,
   endOfDay,
+  listAppointmentHistory,
   listAppointmentsForRange,
   rescheduleAppointment,
   startOfDay,
@@ -19,6 +20,8 @@ import {
   type AppointmentWithPatient,
 } from "@/lib/appointments-api";
 import { listWaitlist, markWaitlistScheduled, type WaitlistWithPatient } from "@/lib/waitlist-api";
+import { scoreNoShow, RISK_TONE, RISK_LABEL } from "@/lib/no-show-risk";
+
 
 export const Route = createFileRoute("/_authenticated/schedule")({
   head: () => ({
