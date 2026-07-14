@@ -145,7 +145,7 @@ export function Odontogram({ patientId }: { patientId: string }) {
 }
 
 function ArchRow({
-  teeth, charts, selected, onSelect, onSurfaceClick, savingTooth, label, flip,
+  teeth, charts, selected, onSelect, onSurfaceClick, savingTooth, label, flip, dentition,
 }: {
   teeth: number[];
   charts: Record<number, ToothChartRow>;
@@ -155,6 +155,7 @@ function ArchRow({
   savingTooth: number | null;
   label: string;
   flip?: boolean;
+  dentition: "permanent" | "primary";
 }) {
   return (
     <div>
@@ -169,6 +170,7 @@ function ArchRow({
             saving={savingTooth === n}
             onSelect={() => onSelect(n)}
             onSurfaceClick={(s) => onSurfaceClick(n, s)}
+            dentition={dentition}
           />
         ))}
       </div>
