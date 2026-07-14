@@ -46,6 +46,8 @@ export function PatientFormDialog({ open, onClose, onSubmit, initial, title }: P
     setAddress(initial?.address ?? "");
     setNotes(initial?.notes ?? "");
     setAllergiesInput((initial?.allergies ?? []).join(", "));
+    setConditionsInput(((initial as any)?.medical_conditions ?? []).join(", "));
+    setMedicationsInput(((initial as any)?.medications ?? []).join(", "));
   }, [open, initial]);
 
   if (!open) return null;
