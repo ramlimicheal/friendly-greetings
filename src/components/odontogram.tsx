@@ -110,6 +110,8 @@ export function Odontogram({ patientId }: { patientId: string }) {
               onSurfaceClick={(n, s) => applyPatch(n, { [`surface_${s}`]: cycleSurface((charts[n]?.[`surface_${s}` as const] ?? "sound") as SurfaceCondition) } as any)}
               savingTooth={savingTooth}
               label="Upper"
+              dentition={dentition}
+
             />
             <div className="my-4 h-px bg-border" />
             <ArchRow
