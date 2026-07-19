@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/platform/clinics")({
 });
 
 function PlatformClinicsPage() {
-  const { platformRole, loading, refresh } = useClinic();
+  const { platformRole, loading, reload } = useClinic();
   const navigate = useNavigate();
   const isSuper = platformRole === "super_admin";
 
