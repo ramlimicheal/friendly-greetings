@@ -151,7 +151,6 @@ function PlatformClinicsPage() {
                       <GhostButton
                         onClick={() => impersonate.mutate(c.id)}
                         disabled={impersonate.isPending}
-                        title="Switch into this clinic"
                       >
                         <LogIn className="mr-1 h-3.5 w-3.5" />
                         Enter
