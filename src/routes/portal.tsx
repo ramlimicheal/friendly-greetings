@@ -414,24 +414,18 @@ function PortalDashboard() {
                     {p.status}
                   </span>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Total</div>
-                    <div className="font-semibold">${Number(p.total_fee ?? 0).toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Your responsibility</div>
-                    <div className="font-semibold">${Number(p.patient_responsibility ?? 0).toFixed(2)}</div>
-                  </div>
+                <div className="mt-4 text-sm">
+                  <div className="text-xs text-muted-foreground">Total fee</div>
+                  <div className="font-semibold">${p.total_fee.toFixed(2)}</div>
                 </div>
-                {p.treatment_plan_items?.length ? (
+                {p.items.length ? (
                   <ul className="mt-4 divide-y divide-border rounded-lg border border-border">
-                    {p.treatment_plan_items.map((it) => (
+                    {p.items.map((it) => (
                       <li key={it.id} className="flex items-center justify-between px-3 py-2 text-sm">
                         <div>
                           <div>{it.description}</div>
                           <div className="text-xs text-muted-foreground">
-                            {it.tooth ? `Tooth ${it.tooth} · ` : ""}
+                            {it.tooth_number ? `Tooth ${it.tooth_number} · ` : ""}
                             <span className="capitalize">{it.status}</span>
                           </div>
                         </div>
