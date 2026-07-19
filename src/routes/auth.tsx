@@ -9,6 +9,7 @@ import { getInvitationByToken, type AppRole } from "@/lib/staff.functions";
 type Search = { invite?: string; bootstrap?: string };
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   validateSearch: (s: Record<string, unknown>): Search => ({
     invite: typeof s.invite === "string" ? s.invite : undefined,
     bootstrap: typeof s.bootstrap === "string" ? s.bootstrap : undefined,
