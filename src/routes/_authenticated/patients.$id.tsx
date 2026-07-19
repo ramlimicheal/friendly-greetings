@@ -31,6 +31,7 @@ import {
 import { Odontogram } from "@/components/odontogram";
 import { TreatmentPlanPanel } from "@/components/treatment-plan-panel";
 import { ClinicalNotesPanel } from "@/components/clinical-notes-panel";
+import { PatientFilesPanel } from "@/components/patient-files-panel";
 
 export const Route = createFileRoute("/_authenticated/patients/$id")({
   head: () => ({
@@ -56,7 +57,7 @@ export const Route = createFileRoute("/_authenticated/patients/$id")({
   ),
 });
 
-type Tab = "overview" | "chart" | "plan" | "history" | "billing";
+type Tab = "overview" | "chart" | "plan" | "history" | "files" | "billing";
 
 function PatientDetail() {
   const { id } = Route.useParams();
@@ -185,7 +186,7 @@ function PatientDetail() {
         <div>
           <Card className="!p-0 overflow-hidden">
             <div className="flex gap-1 border-b border-border bg-muted/40 p-2">
-              {(["overview","chart","plan","history","billing"] as Tab[]).map((t) => (
+              {(["overview","chart","plan","history","files","billing"] as Tab[]).map((t) => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
@@ -203,6 +204,7 @@ function PatientDetail() {
               {tab === "chart" && <Odontogram patientId={patient.id} />}
               {tab === "plan" && <TreatmentPlanPanel patientId={patient.id} patientName={patient.full_name} />}
               {tab === "history" && <ClinicalNotesPanel patientId={patient.id} />}
+              {tab === "files" && <PatientFilesPanel patientId={patient.id} />}
               {tab === "billing" && <ComingSoon what="Billing" />}
             </div>
           </Card>
