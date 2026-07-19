@@ -314,6 +314,59 @@ export type Database = {
           },
         ]
       }
+      clinic_settings: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          email_enabled: boolean
+          email_from_address: string | null
+          email_from_name: string | null
+          reminder_email_body: string
+          reminder_email_subject: string
+          reminder_hours_before: number
+          reminder_sms_template: string
+          sms_enabled: boolean
+          sms_from: string | null
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          email_enabled?: boolean
+          email_from_address?: string | null
+          email_from_name?: string | null
+          reminder_email_body?: string
+          reminder_email_subject?: string
+          reminder_hours_before?: number
+          reminder_sms_template?: string
+          sms_enabled?: boolean
+          sms_from?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          email_enabled?: boolean
+          email_from_address?: string | null
+          email_from_name?: string | null
+          reminder_email_body?: string
+          reminder_email_subject?: string
+          reminder_hours_before?: number
+          reminder_sms_template?: string
+          sms_enabled?: boolean
+          sms_from?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_settings_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: true
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinical_notes: {
         Row: {
           assessment: string | null
@@ -444,6 +497,85 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communications: {
+        Row: {
+          appointment_id: string | null
+          body: string
+          channel: string
+          clinic_id: string
+          created_at: string
+          direction: string
+          error: string | null
+          id: string
+          patient_id: string | null
+          provider_ref: string | null
+          purpose: string
+          sent_by: string | null
+          status: string
+          subject: string | null
+          to_address: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          body: string
+          channel: string
+          clinic_id?: string
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          patient_id?: string | null
+          provider_ref?: string | null
+          purpose?: string
+          sent_by?: string | null
+          status?: string
+          subject?: string | null
+          to_address: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          body?: string
+          channel?: string
+          clinic_id?: string
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          patient_id?: string | null
+          provider_ref?: string | null
+          purpose?: string
+          sent_by?: string | null
+          status?: string
+          subject?: string | null
+          to_address?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communications_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
