@@ -333,14 +333,19 @@ export function GhostButton({
 
 
 const ROLE_LABEL: Record<string, string> = {
+  owner: "Owner",
   admin: "Admin",
   dentist: "Dentist",
   hygienist: "Hygienist",
+  assistant: "Assistant",
   front_desk: "Front desk",
+  billing_specialist: "Billing",
+  read_only_auditor: "Auditor",
 };
 
 function UserMenu() {
-  const { user, profile, roles, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
+  const { activeRole, isSuperAdmin } = useClinic();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -361,7 +366,14 @@ function UserMenu() {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  const roleLabel = roles[0] ? ROLE_LABEL[roles[0]] ?? roles[0] : loading ? "" : "No role";
+  const roleLabel = isSuperAdmin
+    ? "Super admin"
+    : activeRole
+    ? ROLE_LABEL[activeRole] ?? activeRole
+    : loading
+    ? ""
+    : "No role";
+
 
   const signOut = async () => {
     await qc.cancelQueries();
