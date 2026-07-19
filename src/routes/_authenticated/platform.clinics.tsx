@@ -61,7 +61,7 @@ function PlatformClinicsPage() {
   const impersonate = useMutation({
     mutationFn: (clinic_id: string) => impersonateFn({ data: { clinic_id } }),
     onSuccess: async () => {
-      await refresh();
+      await reload();
       navigate({ to: "/" });
     },
   });
