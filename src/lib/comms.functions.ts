@@ -50,21 +50,20 @@ async function sendEmailViaLovable(
   to: string,
   subject: string,
   body: string,
-  fromName?: string,
+  from: string,
 ): Promise<{ ok: true; ref: string } | { ok: false; error: string }> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) return { ok: false, error: "LOVABLE_API_KEY not configured" };
+  if (!from) return { ok: false, error: "Sender email not configured in clinic settings" };
   try {
-    const { sendLovableEmail } = await import("@lovable.dev/email-js").catch(() => ({ sendLovableEmail: null as any }));
-    if (!sendLovableEmail) return { ok: false, error: "Email SDK not installed" };
+    const { sendLovableEmail } = await import("@lovable.dev/email-js");
     const html = `<div style="font-family:Arial,sans-serif;white-space:pre-line">${body.replace(/</g, "&lt;")}</div>`;
-    const res = await sendLovableEmail({
-      apiKey: process.env.LOVABLE_API_KEY!,
-      to,
-      subject,
-      html,
-      from: fromName,
-    } as any);
-    if ((res as any)?.sent === false) return { ok: false, error: (res as any).reason ?? "not sent" };
-    return { ok: true, ref: (res as any)?.id ?? "sent" };
+    const res = await sendLovableEmail(
+      { to, from, subject, html, text: body },
+      { apiKey },
+    );
+    if (!res.success) return { ok: false, error: res.status ?? "not sent" };
+    return { ok: true, ref: res.message_id ?? "sent" };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "Email send failed" };
   }
@@ -105,12 +104,12 @@ export const sendCommunication = createServerFn({ method: "POST" })
     if (insErr) throw new Error(insErr.message);
 
     const settings = await getClinicSettings(supabase, data.clinic_id);
-    const fromName = settings?.email_from_name ?? undefined;
+    const fromEmail = settings?.email_from_address ?? "";
 
     const result =
       data.channel === "sms"
         ? await sendSmsViaTwilio(data.to, data.body)
-        : await sendEmailViaLovable(data.to, data.subject ?? "Message from your clinic", data.body, fromName);
+        : await sendEmailViaLovable(data.to, data.subject ?? "Message from your clinic", data.body, fromEmail);
 
     await supabase
       .from("communications")
