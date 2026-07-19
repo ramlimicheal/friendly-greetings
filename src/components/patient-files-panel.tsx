@@ -86,7 +86,7 @@ export function PatientFilesPanel({ patientId }: { patientId: string }) {
     }
   };
 
-  const canUpload = can("clinical.edit") || can("billing.edit") || can("staff.manage");
+  const canUpload = can("clinical.edit") || can("billing.manage") || can("staff.manage");
 
   return (
     <Card>
