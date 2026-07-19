@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/reports")({
 });
 
 function ReportsPage() {
-  useRequirePermission(["reports.view","reports.viewOwn"] as never);
+  useRequirePermission(["reports.view","reports.viewOwn"] as const);
   return (
     <AppShell
       title="Reports"

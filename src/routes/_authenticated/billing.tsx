@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/billing")({
 type Tab = "invoices" | "payments" | "claims" | "estimator" | "aging";
 
 function BillingPage() {
-  useRequirePermission(["billing.view","billing.manage","claims.manage"] as never);
+  useRequirePermission(["billing.view","billing.manage","claims.manage"] as const);
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("invoices");
   const [invoiceDialog, setInvoiceDialog] = useState<{ open: boolean; editing?: any }>({ open: false });

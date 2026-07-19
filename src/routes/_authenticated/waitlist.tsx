@@ -36,7 +36,7 @@ const PRIORITY_TONE: Record<number, string> = {
 };
 
 function WaitlistPage() {
-  useRequirePermission(["waitlist.manage","schedule.view"] as never);
+  useRequirePermission(["waitlist.manage","schedule.view"] as const);
   const [items, setItems] = useState<WaitlistWithPatient[]>([]);
   const [filter, setFilter] = useState<"active" | "scheduled" | "removed" | "all">("active");
   const [loading, setLoading] = useState(true);
