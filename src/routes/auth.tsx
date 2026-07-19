@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, ShieldAlert } from "lucide-react";
@@ -20,10 +20,18 @@ export const Route = createFileRoute("/auth")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AuthPage,
+  component: () => (
+    <ClientOnly fallback={<AuthFallback />}>
+      <AuthPage />
+    </ClientOnly>
+  ),
 });
 
 type Mode = "signin" | "signup";
+
+function AuthFallback() {
+  return <div className="min-h-screen bg-background text-foreground" />;
+}
 
 function AuthPage() {
   const navigate = useNavigate();
