@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   Building2,
   Check,
+  MessageSquare,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -44,6 +45,7 @@ const NAV: NavItem[] = [
   { to: "/waitlist", label: "Waitlist", icon: ListChecks, perms: ["waitlist.manage", "schedule.view"] },
   { to: "/recalls", label: "Recalls", icon: RefreshCcw, perms: ["recalls.manage"] },
   { to: "/treatments", label: "Treatments", icon: Stethoscope, perms: ["clinical.edit"] },
+  { to: "/communications", label: "Messages", icon: MessageSquare, perms: ["patients.view"] },
   { to: "/billing", label: "Billing", icon: Receipt, perms: ["billing.view"] },
   { to: "/inventory", label: "Inventory", icon: Package, perms: ["inventory.manage"] },
   { to: "/reports", label: "Reports", icon: BarChart3, perms: ["reports.view", "reports.viewOwn"] },
