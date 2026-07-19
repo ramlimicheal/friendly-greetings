@@ -85,7 +85,9 @@ export function AppShell({
 function TopNav() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
   const { roles } = useAuth();
+  const { platformRole } = useClinic();
   const visibleNav = NAV.filter((n) => !n.roles || n.roles.some((r) => roles.includes(r)));
+  const isSuper = platformRole === "super_admin";
 
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
