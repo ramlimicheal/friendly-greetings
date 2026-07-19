@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, DollarSign, FileText, ShieldCheck, Receipt, Printer, Edit3, Wallet, AlertCircle, ArrowDownRight, Sparkles } from "lucide-react";
@@ -46,6 +47,7 @@ export const Route = createFileRoute("/_authenticated/billing")({
 type Tab = "invoices" | "payments" | "claims" | "estimator" | "aging";
 
 function BillingPage() {
+  useRequirePermission(["billing.view","billing.manage","claims.manage"] as const);
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>("invoices");
   const [invoiceDialog, setInvoiceDialog] = useState<{ open: boolean; editing?: any }>({ open: false });

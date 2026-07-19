@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { Plus, Search, Package, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { AppShell, Card, GhostButton, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/inventory")({
 });
 
 function InventoryPage() {
+  useRequirePermission("inventory.manage");
   const [q, setQ] = useState("");
   const filtered = inventory.filter(i => !q || i.name.toLowerCase().includes(q.toLowerCase()));
   const low = inventory.filter(i => i.onHand <= i.reorderAt);

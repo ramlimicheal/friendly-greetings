@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar, ClipboardList, Check, X as XIcon, FileText, Loader2 } from "lucide-react";
 import { AppShell, Card, GhostButton, Pill, SectionHeader } from "@/components/app-shell";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/bookings")({
 });
 
 function BookingsPage() {
+  useRequirePermission("bookings.manage");
   const [tab, setTab] = useState<"bookings" | "intake">("bookings");
   const [statusFilter, setStatusFilter] = useState<BookingStatus | "all">("pending");
   const [rows, setRows] = useState<BookingRequestRow[]>([]);

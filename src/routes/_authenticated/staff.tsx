@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -36,6 +37,7 @@ const ROLES: { value: AppRole; label: string }[] = [
 ];
 
 function StaffPage() {
+  useRequirePermission("staff.manage");
   const { roles, loading } = useAuth();
   const navigate = useNavigate();
   const isAdmin = roles.includes("admin");

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { useState } from "react";
 import { Plus, Search, Stethoscope } from "lucide-react";
 import { AppShell, Card, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/treatments")({
 });
 
 function TreatmentsPage() {
+  useRequirePermission("clinical.edit");
   const [q, setQ] = useState("");
   const categories = Array.from(new Set(treatmentCatalog.map((t) => t.category)));
   const [cat, setCat] = useState<string>("All");
