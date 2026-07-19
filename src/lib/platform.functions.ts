@@ -181,11 +181,11 @@ export const impersonateClinic = createServerFn({ method: "POST" })
       .update({ active_clinic_id: data.clinic_id })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
-    // Log
     await supabaseAdmin.from("audit_log").insert({
-      actor_id: context.userId,
+      user_id: context.userId,
+      clinic_id: data.clinic_id,
       action: "platform.impersonate_clinic",
-      entity: "clinic",
+      entity_type: "clinic",
       entity_id: data.clinic_id,
       metadata: {},
     });
