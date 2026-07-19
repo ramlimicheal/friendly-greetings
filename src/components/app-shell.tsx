@@ -99,13 +99,12 @@ function TopNav() {
           <div className="leading-tight">
             <div className="flex items-center gap-2">
               <span className="text-[15px] font-semibold tracking-tight">Enamel</span>
-              <span className="hidden rounded-md bg-primary-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-foreground sm:inline">
-                Clinic
-              </span>
             </div>
-            <div className="hidden text-[11px] text-muted-foreground sm:block">Northside Practice</div>
           </div>
         </Link>
+
+        {/* Clinic switcher */}
+        <ClinicSwitcher />
 
         <div className="mx-2 hidden h-8 w-px bg-border lg:block" />
 
