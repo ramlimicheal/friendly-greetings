@@ -142,7 +142,7 @@ function PlatformClinicsPage() {
                   <td className="px-4 py-3">{c.member_count}</td>
                   <td className="px-4 py-3">{c.patient_count}</td>
                   <td className="px-4 py-3">
-                    <Pill tone={c.is_active ? "green" : "amber"}>
+                    <Pill tone={c.is_active ? "success" : "warn"}>
                       {c.is_active ? "Active" : "Suspended"}
                     </Pill>
                   </td>
