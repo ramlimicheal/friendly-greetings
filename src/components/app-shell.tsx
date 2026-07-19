@@ -2,6 +2,8 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useClinic } from "@/hooks/use-clinic";
+import { usePermissions } from "@/hooks/use-permissions";
+import type { Permission } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -26,28 +28,28 @@ import {
   Check,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import type { AppRole } from "@/hooks/use-auth";
 
 type NavItem = {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
   exact?: boolean;
-  roles?: AppRole[]; // if omitted, all roles see it
+  perms?: Permission[]; // if omitted, all authenticated members see it
 };
 const NAV: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/patients", label: "Patients", icon: Users },
-  { to: "/schedule", label: "Schedule", icon: CalendarDays },
-  { to: "/bookings", label: "Bookings", icon: CalendarClock, roles: ["admin", "front_desk", "dentist", "hygienist"] },
-  { to: "/waitlist", label: "Waitlist", icon: ListChecks },
-  { to: "/recalls", label: "Recalls", icon: RefreshCcw },
-  { to: "/treatments", label: "Treatments", icon: Stethoscope, roles: ["admin", "dentist", "hygienist"] },
-  { to: "/billing", label: "Billing", icon: Receipt, roles: ["admin", "front_desk", "dentist"] },
-  { to: "/inventory", label: "Inventory", icon: Package, roles: ["admin", "front_desk"] },
-  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["admin", "dentist"] },
-  { to: "/staff", label: "Staff", icon: ShieldCheck, roles: ["admin"] },
+  { to: "/patients", label: "Patients", icon: Users, perms: ["patients.view"] },
+  { to: "/schedule", label: "Schedule", icon: CalendarDays, perms: ["schedule.view"] },
+  { to: "/bookings", label: "Bookings", icon: CalendarClock, perms: ["bookings.manage"] },
+  { to: "/waitlist", label: "Waitlist", icon: ListChecks, perms: ["waitlist.manage", "schedule.view"] },
+  { to: "/recalls", label: "Recalls", icon: RefreshCcw, perms: ["recalls.manage"] },
+  { to: "/treatments", label: "Treatments", icon: Stethoscope, perms: ["clinical.edit"] },
+  { to: "/billing", label: "Billing", icon: Receipt, perms: ["billing.view"] },
+  { to: "/inventory", label: "Inventory", icon: Package, perms: ["inventory.manage"] },
+  { to: "/reports", label: "Reports", icon: BarChart3, perms: ["reports.view", "reports.viewOwn"] },
+  { to: "/staff", label: "Staff", icon: ShieldCheck, perms: ["staff.manage"] },
 ];
+
 
 
 
@@ -84,10 +86,11 @@ export function AppShell({
 
 function TopNav() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
-  const { roles } = useAuth();
+  const { canAny } = usePermissions();
   const { platformRole } = useClinic();
-  const visibleNav = NAV.filter((n) => !n.roles || n.roles.some((r) => roles.includes(r)));
+  const visibleNav = NAV.filter((n) => !n.perms || canAny(n.perms));
   const isSuper = platformRole === "super_admin";
+
 
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
@@ -330,14 +333,19 @@ export function GhostButton({
 
 
 const ROLE_LABEL: Record<string, string> = {
+  owner: "Owner",
   admin: "Admin",
   dentist: "Dentist",
   hygienist: "Hygienist",
+  assistant: "Assistant",
   front_desk: "Front desk",
+  billing_specialist: "Billing",
+  read_only_auditor: "Auditor",
 };
 
 function UserMenu() {
-  const { user, profile, roles, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
+  const { activeRole, isSuperAdmin } = useClinic();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -358,7 +366,14 @@ function UserMenu() {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-  const roleLabel = roles[0] ? ROLE_LABEL[roles[0]] ?? roles[0] : loading ? "" : "No role";
+  const roleLabel = isSuperAdmin
+    ? "Super admin"
+    : activeRole
+    ? ROLE_LABEL[activeRole] ?? activeRole
+    : loading
+    ? ""
+    : "No role";
+
 
   const signOut = async () => {
     await qc.cancelQueries();
