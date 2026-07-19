@@ -447,7 +447,7 @@ function PortalDashboard() {
                 <div>
                   <div className="text-sm font-semibold">{i.invoice_no}</div>
                   <div className="text-xs text-muted-foreground">
-                    Issued {formatDate(i.issued_at)} · Due {formatDate(i.due_at)}
+                    Issued {formatDate(i.issue_date)} · Due {formatDate(i.due_date)}
                   </div>
                 </div>
                 <div className="text-right">
