@@ -384,3 +384,82 @@ function UserMenu() {
     </div>
   );
 }
+
+function ClinicSwitcher() {
+  const { memberships, activeClinic, activeRole, switchClinic, loading, isSuperAdmin } = useClinic();
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  if (loading) return null;
+  if (!activeClinic && memberships.length === 0 && !isSuperAdmin) return null;
+
+  const label = activeClinic?.name ?? "Select clinic";
+  const roleLabel = activeRole
+    ? activeRole.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : isSuperAdmin
+    ? "Super admin"
+    : "";
+
+  return (
+    <div className="relative ml-1" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 transition hover:bg-muted"
+      >
+        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="hidden text-left sm:block">
+          <div className="text-xs font-semibold leading-tight">{label}</div>
+          {roleLabel && (
+            <div className="text-[10px] leading-tight text-muted-foreground">{roleLabel}</div>
+          )}
+        </div>
+        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-40 mt-2 w-64 rounded-xl border border-border bg-card p-1 ring-1 ring-border/50">
+          <div className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Your clinics
+          </div>
+          {memberships.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">You aren't a member of any clinic yet.</div>
+          )}
+          {memberships.map((m) => (
+            <button
+              key={m.clinic_id}
+              onClick={() => {
+                setOpen(false);
+                if (m.clinic_id !== activeClinic?.id) void switchClinic(m.clinic_id);
+              }}
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-muted"
+            >
+              <div>
+                <div className="font-semibold">{m.clinic.name}</div>
+                <div className="text-[10px] text-muted-foreground">{m.role.replace("_", " ")}</div>
+              </div>
+              {m.clinic_id === activeClinic?.id && <Check className="h-3.5 w-3.5 text-primary" />}
+            </button>
+          ))}
+          <div className="my-1 h-px bg-border" />
+          <button
+            onClick={() => {
+              setOpen(false);
+              navigate({ to: "/onboarding" });
+            }}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium hover:bg-muted"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add another clinic
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
