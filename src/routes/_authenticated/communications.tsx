@@ -37,13 +37,8 @@ function CommunicationsPage() {
   const [tab, setTab] = useState<"send" | "history" | "settings">("send");
 
   return (
-    <AppShell>
+    <AppShell title="Messages" subtitle="Send and track SMS & email to patients">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-4 flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          <h1 className="text-xl font-semibold">Messages</h1>
-        </div>
-
         <div className="mb-4 flex gap-1 rounded-full border border-border bg-muted/40 p-1 w-fit">
           {(["send", "history", "settings"] as const).map((t) => (
             <button
