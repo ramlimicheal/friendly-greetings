@@ -18,6 +18,14 @@ export const Route = createFileRoute("/_authenticated")({
       await supabase.auth.signOut();
       throw redirect({ to: "/auth", search: { deactivated: "1" } as never });
     }
+    // If this user is a patient portal user (not staff), redirect them to /portal
+    const { data: portalLink } = await supabase
+      .from("patient_portal_users")
+      .select("user_id")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+    if (portalLink) throw redirect({ to: "/portal" });
+
     // If they have no active clinic AND they are not already on the onboarding page,
     // send them to onboarding. Membership check keeps super_admins / support out of the loop.
     const p = profile as { is_active: boolean | null; active_clinic_id: string | null } | null;

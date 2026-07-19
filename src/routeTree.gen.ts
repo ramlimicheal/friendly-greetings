@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PortalRouteImport } from './routes/portal'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -32,6 +33,11 @@ import { Route as AuthenticatedPatientsIdRouteImport } from './routes/_authentic
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BookRoute = BookRouteImport.update({
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
+  '/portal': typeof PortalRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/bookings': typeof AuthenticatedBookingsRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
+  '/portal': typeof PortalRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/billing': typeof AuthenticatedBillingRoute
   '/bookings': typeof AuthenticatedBookingsRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
+  '/portal': typeof PortalRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/book'
+    | '/portal'
     | '/sitemap.xml'
     | '/billing'
     | '/bookings'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/book'
+    | '/portal'
     | '/sitemap.xml'
     | '/billing'
     | '/bookings'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/book'
+    | '/portal'
     | '/sitemap.xml'
     | '/_authenticated/billing'
     | '/_authenticated/bookings'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   BookRoute: typeof BookRoute
+  PortalRoute: typeof PortalRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/book': {
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   BookRoute: BookRoute,
+  PortalRoute: PortalRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport

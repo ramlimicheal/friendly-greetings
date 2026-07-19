@@ -1220,6 +1220,42 @@ export type Database = {
           },
         ]
       }
+      patient_portal_users: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          patient_id: string
+          user_id: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          patient_id: string
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          patient_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_portal_users_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_portal_users_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null
@@ -1825,6 +1861,7 @@ export type Database = {
         }[]
       }
       current_clinic_id: { Args: never; Returns: string }
+      current_portal_patient_id: { Args: never; Returns: string }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
