@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useClinic } from "@/hooks/use-clinic";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -21,6 +22,8 @@ import {
   ListChecks,
   RefreshCcw,
   ShieldCheck,
+  Building2,
+  Check,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { AppRole } from "@/hooks/use-auth";
