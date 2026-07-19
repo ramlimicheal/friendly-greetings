@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { AppShell, Card, GhostButton, SectionHeader } from "@/components/app-shell";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/recalls")({
 });
 
 function RecallsPage() {
+  useRequirePermission("recalls.manage");
   const [items, setItems] = useState<RecallWithPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"due" | "upcoming" | "all">("due");

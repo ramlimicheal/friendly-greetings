@@ -36,6 +36,7 @@ const ROLES: { value: AppRole; label: string }[] = [
 ];
 
 function StaffPage() {
+  useRequirePermission("staff.manage");
   const { roles, loading } = useAuth();
   const navigate = useNavigate();
   const isAdmin = roles.includes("admin");

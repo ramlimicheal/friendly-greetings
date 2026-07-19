@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { useEffect, useState } from "react";
 import { Download, DollarSign, TrendingUp, Users, Flame } from "lucide-react";
 import { AppShell, Card, GhostButton, SectionHeader } from "@/components/app-shell";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/reports")({
 });
 
 function ReportsPage() {
+  useRequirePermission(["reports.view","reports.viewOwn"] as never);
   return (
     <AppShell
       title="Reports"

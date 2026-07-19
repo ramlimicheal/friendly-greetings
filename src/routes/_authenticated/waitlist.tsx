@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRequirePermission } from "@/hooks/use-permissions";
 import { useEffect, useState } from "react";
 import { Plus, Calendar, Trash2, Pencil } from "lucide-react";
 import { AppShell, Card, GhostButton, PrimaryButton, SectionHeader } from "@/components/app-shell";
@@ -35,6 +36,7 @@ const PRIORITY_TONE: Record<number, string> = {
 };
 
 function WaitlistPage() {
+  useRequirePermission(["waitlist.manage","schedule.view"] as never);
   const [items, setItems] = useState<WaitlistWithPatient[]>([]);
   const [filter, setFilter] = useState<"active" | "scheduled" | "removed" | "all">("active");
   const [loading, setLoading] = useState(true);
