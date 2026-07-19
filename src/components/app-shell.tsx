@@ -85,7 +85,9 @@ export function AppShell({
 function TopNav() {
   const currentPath = useRouterState({ select: (s) => s.location.pathname });
   const { roles } = useAuth();
+  const { platformRole } = useClinic();
   const visibleNav = NAV.filter((n) => !n.roles || n.roles.some((r) => roles.includes(r)));
+  const isSuper = platformRole === "super_admin";
 
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur">
@@ -172,6 +174,20 @@ function TopNav() {
               </Link>
             );
           })}
+          {isSuper && (
+            <Link
+              to="/platform/clinics"
+              className={
+                "inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition " +
+                (currentPath.startsWith("/platform")
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground")
+              }
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              Platform
+            </Link>
+          )}
         </nav>
       </div>
     </div>
