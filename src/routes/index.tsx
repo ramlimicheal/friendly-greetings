@@ -388,6 +388,116 @@ function LandingPage() {
           </div>
         </section>
 
+        {/* ============ PRODUCT DEEP-DIVE: AI (reverse split, matches Clinical rhythm) ============ */}
+        <section className="mt-6 rounded-[28px] bg-[#f7f8f4] p-6 sm:p-10 lg:p-14 overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Copy column */}
+            <div className="lg:col-span-5">
+              <div className="text-[11px] uppercase tracking-[0.16em] text-gray-500">05 · Intelligence</div>
+              <h2 className="mt-4 text-4xl lg:text-5xl font-light leading-[1.05] tracking-tight text-[#1a1a1a]">
+                AI that <span className="font-serif italic text-[#7a8968]">writes what you said</span>, not what it guessed.
+              </h2>
+              <p className="mt-5 text-gray-600 text-[14px] leading-relaxed max-w-md">
+                Dictate the visit in your own words. Enamel transcribes, structures it into a signed SOAP note, extracts insurance benefits from a scanned card, and rewrites treatment plans in plain language for the patient — every output cited, editable and reviewed before it lands in the chart.
+              </p>
+              <ul className="mt-6 space-y-2.5 text-[13px] text-gray-700">
+                {[
+                  "Voice → structured S / O / A / P in under 6 seconds",
+                  "Benefits extraction from a scan (deductible, max, %)",
+                  "Plain-language plan explainers, per patient reading level",
+                  "Human-in-the-loop: every AI output is reviewed and signed",
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <Check className="h-4 w-4 mt-0.5 text-[#7a8968] shrink-0" strokeWidth={2.2} />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex items-center gap-2 text-[11px] text-gray-500">
+                <Shield className="h-3.5 w-3.5" strokeWidth={2} />
+                No training on your patient data. HIPAA-scoped inference.
+              </div>
+            </div>
+
+            {/* Story column: transcript → structured SOAP */}
+            <div className="lg:col-span-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Card 1: raw dictation */}
+                <div className="rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between text-[11px] text-gray-400">
+                    <span className="uppercase tracking-[0.14em]">Dictation · live</span>
+                    <span className="flex items-center gap-1.5 text-[#7a8968]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#7a8968] animate-pulse" />
+                      00:42
+                    </span>
+                  </div>
+                  <div className="mt-4 space-y-1 text-[13px] text-gray-700 leading-relaxed">
+                    <p>“Patient reports cold sensitivity on upper left, tooth fourteen, started about a week ago…”</p>
+                    <p className="text-gray-400">“…class two composite still intact, no percussion pain, no swelling…”</p>
+                    <p className="text-gray-300">“…applying fluoride varnish, recall in three months.”</p>
+                  </div>
+                  <div className="mt-5 flex items-center gap-1.5">
+                    {[3, 6, 4, 8, 5, 9, 6, 7, 5, 8, 4, 6, 3, 7, 5, 6].map((h, i) => (
+                      <span key={i} className="w-1 rounded-full bg-[#7a8968]/60" style={{ height: `${h * 2}px` }} />
+                    ))}
+                    <span className="ml-3 text-[11px] text-gray-400">Transcribing…</span>
+                  </div>
+                </div>
+
+                {/* Card 2: structured output */}
+                <div className="rounded-2xl bg-[#1a1a1a] text-white p-5 shadow-sm">
+                  <div className="flex items-center justify-between text-[11px] text-white/50">
+                    <span className="uppercase tracking-[0.14em]">Structured SOAP · draft</span>
+                    <span className="flex items-center gap-1 text-[#c9d3b7]">
+                      <Sparkles className="h-3 w-3" strokeWidth={2} /> AI
+                    </span>
+                  </div>
+                  <dl className="mt-4 space-y-2.5 text-[12.5px] leading-relaxed">
+                    {[
+                      ["S", "Cold sensitivity, tooth #14, 1 week."],
+                      ["O", "Class II composite intact. No percussion pain, no swelling."],
+                      ["A", "Dentinal hypersensitivity."],
+                      ["P", "Fluoride varnish 5%. Recall 3 months."],
+                    ].map(([k, v]) => (
+                      <div key={k} className="grid grid-cols-[20px_1fr] gap-3">
+                        <dt className="text-[#c9d3b7] font-medium">{k}</dt>
+                        <dd className="text-white/85">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-[11px]">
+                    <span className="text-white/50">Awaiting Dr. Okafor review</span>
+                    <span className="rounded-full bg-[#c9d3b7] text-[#1a1a1a] px-2.5 py-1 font-medium">Sign & post</span>
+                  </div>
+                </div>
+
+                {/* Card 3: benefits extraction (spans full width) */}
+                <div className="md:col-span-2 rounded-2xl bg-white p-5 shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[11px] uppercase tracking-[0.14em] text-gray-400">Benefits extraction · Delta PPO card</div>
+                    <span className="text-[11px] text-gray-400">2.3s · 4 fields</span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { k: "Annual max", v: "$1,500" },
+                      { k: "Deductible", v: "$50" },
+                      { k: "Preventive", v: "100%" },
+                      { k: "Major", v: "50%" },
+                    ].map((s) => (
+                      <div key={s.k} className="rounded-lg bg-[#f7f8f4] px-3 py-2.5">
+                        <div className="text-[10.5px] uppercase tracking-wide text-gray-400">{s.k}</div>
+                        <div className="mt-0.5 text-[15px] font-medium text-[#1a1a1a]">{s.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+
         {/* ============ STATS BAND ============ */}
         <section className="mt-6 rounded-[24px] bg-[#eef0ec] border border-[#dfe3d8] p-6 sm:p-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
