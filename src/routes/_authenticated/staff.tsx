@@ -43,7 +43,7 @@ function StaffPage() {
   const isAdmin = roles.includes("admin");
 
   useEffect(() => {
-    if (!loading && !isAdmin) navigate({ to: "/" });
+    if (!loading && !isAdmin) navigate({ to: "/dashboard" });
   }, [loading, isAdmin, navigate]);
 
   const qc = useQueryClient();

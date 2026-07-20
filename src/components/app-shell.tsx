@@ -99,7 +99,7 @@ function TopNav() {
       {/* Row 1: brand · search · actions */}
       <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:gap-4 sm:px-6">
         {/* Brand */}
-        <Link to="/" className="flex shrink-0 items-center gap-2.5">
+        <Link to="/dashboard" className="flex shrink-0 items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Plus className="h-4 w-4" strokeWidth={3} />
           </span>

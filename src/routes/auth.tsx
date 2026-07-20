@@ -53,7 +53,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/" });
+      if (data.user) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
 
@@ -107,14 +107,14 @@ function AuthPage() {
         if (err) throw err;
         const { data: u } = await supabase.auth.getUser();
         if (u.user) {
-          navigate({ to: "/" });
+          navigate({ to: "/dashboard" });
         } else {
           setInfo("Check your email to confirm your account.");
         }
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -139,7 +139,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/" });
+    navigate({ to: "/dashboard" });
   };
 
   const roleLabel: Record<AppRole, string> = {

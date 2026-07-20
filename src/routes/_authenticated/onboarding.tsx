@@ -27,7 +27,7 @@ function OnboardingPage() {
 
   // If user already has an active clinic, kick them out of the wizard.
   useEffect(() => {
-    if (!loading && activeClinicId) navigate({ to: "/" });
+    if (!loading && activeClinicId) navigate({ to: "/dashboard" });
   }, [loading, activeClinicId, navigate]);
 
   const create = async () => {
@@ -66,7 +66,7 @@ function OnboardingPage() {
       // 4. Activate this clinic on profile
       await supabase.from("profiles").update({ active_clinic_id: clinic.id }).eq("id", u.user.id);
       await reload();
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Something went wrong");
     } finally {
