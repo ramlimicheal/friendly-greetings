@@ -107,24 +107,18 @@ function LandingPage() {
           </div>
 
           {/* Hero content */}
-          <div className="relative mt-10 lg:mt-14 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <h1 className="lg:col-span-8 text-white text-4xl sm:text-5xl lg:text-6xl leading-[1.05] font-light tracking-tight max-w-3xl">
+          <div className="relative mt-10 lg:mt-14 grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-6 items-end">
+            <h1 className="lg:col-span-8 text-white text-4xl sm:text-5xl lg:text-6xl leading-[1.05] font-light tracking-tight">
               The calm operating system<br className="hidden sm:block" /> for modern dental clinics
             </h1>
-            <p className="lg:col-span-4 text-white/85 text-sm leading-relaxed max-w-xs lg:mt-3">
+            <p className="lg:col-span-4 text-white/85 text-sm leading-relaxed max-w-sm">
               Enamel unifies scheduling, charting, billing and patient communication in one connected workspace — so your team can focus on care, not software.
             </p>
           </div>
 
-          {/* Hero image */}
-          <div className="relative mt-8 h-[220px] sm:h-[280px] lg:h-[340px] rounded-2xl overflow-hidden">
-            <img src={heroImg} alt="Dentist reviewing schedule on a tablet in a bright modern clinic" width={1600} height={900} className="w-full h-full object-cover object-center" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#7a8968]/20 via-transparent to-[#7a8968]/40" />
-          </div>
-
-          {/* Filter / CTA row */}
-          <div className="relative -mt-8 flex flex-wrap items-center justify-between gap-4 px-2">
-            <div className="flex flex-wrap items-center gap-2">
+          {/* Filter + CTA row (single aligned row, above image) */}
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-1">
               <button className="rounded-full bg-white text-[#2a2a2a] px-5 py-2.5 text-sm font-medium shadow-sm">
                 All modules
               </button>
@@ -134,7 +128,7 @@ function LandingPage() {
               <button className="text-white/90 text-sm px-3 py-2 hover:text-white">Patients</button>
             </div>
             <div className="flex items-center gap-2">
-              <Link to="/book" className="rounded-full bg-white text-[#2a2a2a] px-5 py-2.5 text-sm font-medium shadow-sm">
+              <Link to="/book" className="rounded-full bg-white/10 border border-white/20 text-white px-5 py-2.5 text-sm font-medium hover:bg-white/15">
                 See patient booking
               </Link>
               <Link to="/auth" className="rounded-full bg-[#1a1a1a] text-white px-5 py-2.5 text-sm font-medium inline-flex items-center gap-2">
@@ -143,16 +137,22 @@ function LandingPage() {
             </div>
           </div>
 
+          {/* Hero image */}
+          <div className="relative mt-6 h-[220px] sm:h-[300px] lg:h-[380px] rounded-2xl overflow-hidden">
+            <img src={heroImg} alt="Dentist reviewing schedule on a tablet in a bright modern clinic" width={1600} height={900} className="w-full h-full object-cover object-center" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#7a8968]/20 via-transparent to-[#7a8968]/40" />
+          </div>
+
           {/* White feature panel */}
-          <div className="mt-6 rounded-[24px] bg-white p-5 sm:p-6 lg:p-7 shadow-xl">
+          <div className="mt-6 rounded-[24px] bg-white p-5 sm:p-6 lg:p-8 shadow-xl">
             {/* Panel header */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 mb-6 sm:flex sm:flex-wrap sm:justify-between">
               <button className="flex items-center gap-2 text-[#2a2a2a] text-sm font-medium">
                 Featured modules
                 <ChevronDown className="h-4 w-4" strokeWidth={2} />
               </button>
-              <div className="flex items-center gap-2">
-                <div className="relative">
+              <div className="flex items-center gap-2 justify-end">
+                <div className="relative hidden sm:block">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
@@ -160,7 +160,7 @@ function LandingPage() {
                     className="w-64 rounded-full bg-[#f3f4f0] pl-9 pr-4 py-2.5 text-sm text-gray-700 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-[#7a8968]/30"
                   />
                 </div>
-                <button className="rounded-full bg-[#1a1a1a] text-white px-5 py-2.5 text-sm font-medium">
+                <button className="rounded-full bg-[#1a1a1a] text-white px-5 py-2.5 text-sm font-medium whitespace-nowrap">
                   Compare plans
                 </button>
               </div>
@@ -170,8 +170,8 @@ function LandingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {features.map((p) => (
                 <div key={p.title} className="flex flex-col">
-                  <div className="relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100">
-                    <img src={p.img} alt={p.title} loading="lazy" width={800} height={1000} className="w-full h-full object-cover" />
+                  <div className="relative rounded-2xl overflow-hidden aspect-square bg-gray-100">
+                    <img src={p.img} alt={p.title} loading="lazy" width={800} height={800} className="w-full h-full object-cover" />
                     {p.tag && (
                       <span className="absolute top-3 left-3 rounded-full bg-white/85 backdrop-blur px-3 py-1 text-[11px] text-gray-700">
                         {p.tag}
@@ -181,12 +181,12 @@ function LandingPage() {
                       {p.code}
                     </span>
                   </div>
-                  <div className="mt-3 px-1">
+                  <div className="mt-3.5 px-0.5 flex flex-col flex-1">
                     <p className="text-[11px] text-gray-400 tracking-wide">{p.category}</p>
-                    <h3 className="mt-1.5 text-[13px] leading-snug text-[#2a2a2a] font-medium line-clamp-2 min-h-[38px]">
+                    <h3 className="mt-1.5 text-[13px] leading-snug text-[#2a2a2a] font-medium line-clamp-2 min-h-[36px]">
                       {p.title}
                     </h3>
-                    <div className="mt-2 flex items-baseline gap-2">
+                    <div className="mt-auto pt-2 flex items-baseline gap-2">
                       <span className="text-[13px] font-semibold text-[#2a2a2a]">{p.meta}</span>
                       {p.status && <span className="text-[11px] text-gray-400">· {p.status}</span>}
                     </div>
@@ -197,16 +197,17 @@ function LandingPage() {
 
             {/* Collapsible sections */}
             <div className="mt-6 divide-y divide-gray-100 border-t border-gray-100">
-              <button className="w-full flex items-center gap-2 py-4 text-sm text-[#2a2a2a]">
-                Insurance, claims & payments
+              <button className="w-full flex items-center justify-between gap-2 py-4 text-sm text-[#2a2a2a]">
+                <span>Insurance, claims & payments</span>
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               </button>
-              <button className="w-full flex items-center gap-2 py-4 text-sm text-[#2a2a2a]">
-                Multi-clinic, roles & audit log
+              <button className="w-full flex items-center justify-between gap-2 py-4 text-sm text-[#2a2a2a]">
+                <span>Multi-clinic, roles & audit log</span>
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               </button>
             </div>
           </div>
+
 
           {/* Footer strip */}
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-white/70 text-xs px-2">
