@@ -36,7 +36,7 @@ import {
 } from "@/lib/appointments-api";
 
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — Enamel Dental Clinic" },

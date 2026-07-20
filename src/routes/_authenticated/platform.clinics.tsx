@@ -32,7 +32,7 @@ function PlatformClinicsPage() {
   const isSuper = platformRole === "super_admin";
 
   useEffect(() => {
-    if (!loading && !isSuper) navigate({ to: "/" });
+    if (!loading && !isSuper) navigate({ to: "/dashboard" });
   }, [loading, isSuper, navigate]);
 
   const qc = useQueryClient();
@@ -62,7 +62,7 @@ function PlatformClinicsPage() {
     mutationFn: (clinic_id: string) => impersonateFn({ data: { clinic_id } }),
     onSuccess: async () => {
       await reload();
-      navigate({ to: "/" });
+      navigate({ to: "/dashboard" });
     },
   });
 

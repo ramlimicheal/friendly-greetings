@@ -25,7 +25,7 @@ export function useRequirePermission(perm: Permission | Permission[]) {
   const allowed = isSuperAdmin || (Array.isArray(perm) ? canAnyDo(perm) : canDo(perm));
   useEffect(() => {
     if (loading) return;
-    if (!allowed) void navigate({ to: "/", replace: true });
+    if (!allowed) void navigate({ to: "/dashboard", replace: true });
   }, [loading, allowed, navigate]);
   return { allowed, loading };
 }
