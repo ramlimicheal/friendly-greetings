@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { LayoutDashboard, CalendarDays, Stethoscope, Receipt, Sparkles, Search, ChevronDown, ArrowRight } from "lucide-react";
+import { LayoutDashboard, CalendarDays, Stethoscope, Receipt, Sparkles, Search, ChevronDown, ArrowRight, Check, Shield, Zap, Users, MessageSquare, CreditCard, FileText, Activity, Lock, Clock, TrendingUp, Star } from "lucide-react";
 import heroImg from "@/assets/enamel-hero.jpg";
 import card1 from "@/assets/enamel-card-1.jpg";
 import card2 from "@/assets/enamel-card-2.jpg";
