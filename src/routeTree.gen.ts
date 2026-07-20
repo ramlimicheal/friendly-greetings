@@ -14,7 +14,7 @@ import { Route as PortalRouteImport } from './routes/portal'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWaitlistRouteImport } from './routes/_authenticated/waitlist'
 import { Route as AuthenticatedTreatmentsRouteImport } from './routes/_authenticated/treatments'
 import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated/staff'
@@ -23,6 +23,7 @@ import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedRecallsRouteImport } from './routes/_authenticated/recalls'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCommunicationsRouteImport } from './routes/_authenticated/communications'
 import { Route as AuthenticatedBookingsRouteImport } from './routes/_authenticated/bookings'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
@@ -54,10 +55,10 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedWaitlistRoute = AuthenticatedWaitlistRouteImport.update({
   id: '/waitlist',
@@ -99,6 +100,11 @@ const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCommunicationsRoute =
   AuthenticatedCommunicationsRouteImport.update({
     id: '/communications',
@@ -134,7 +140,7 @@ const AuthenticatedPatientsIdRoute = AuthenticatedPatientsIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
   '/portal': typeof PortalRoute
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/billing': typeof AuthenticatedBillingRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/communications': typeof AuthenticatedCommunicationsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/recalls': typeof AuthenticatedRecallsRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/patients/': typeof AuthenticatedPatientsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
   '/portal': typeof PortalRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/billing': typeof AuthenticatedBillingRoute
   '/bookings': typeof AuthenticatedBookingsRoute
   '/communications': typeof AuthenticatedCommunicationsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/recalls': typeof AuthenticatedRecallsRoute
@@ -170,13 +179,13 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedStaffRoute
   '/treatments': typeof AuthenticatedTreatmentsRoute
   '/waitlist': typeof AuthenticatedWaitlistRoute
-  '/': typeof AuthenticatedIndexRoute
   '/patients/$id': typeof AuthenticatedPatientsIdRoute
   '/platform/clinics': typeof AuthenticatedPlatformClinicsRoute
   '/patients': typeof AuthenticatedPatientsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/book': typeof BookRoute
@@ -185,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/bookings': typeof AuthenticatedBookingsRoute
   '/_authenticated/communications': typeof AuthenticatedCommunicationsRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/recalls': typeof AuthenticatedRecallsRoute
@@ -193,7 +203,6 @@ export interface FileRoutesById {
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
   '/_authenticated/treatments': typeof AuthenticatedTreatmentsRoute
   '/_authenticated/waitlist': typeof AuthenticatedWaitlistRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/patients/$id': typeof AuthenticatedPatientsIdRoute
   '/_authenticated/platform/clinics': typeof AuthenticatedPlatformClinicsRoute
   '/_authenticated/patients/': typeof AuthenticatedPatientsIndexRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/billing'
     | '/bookings'
     | '/communications'
+    | '/dashboard'
     | '/inventory'
     | '/onboarding'
     | '/recalls'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/patients/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/auth'
     | '/book'
     | '/portal'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/billing'
     | '/bookings'
     | '/communications'
+    | '/dashboard'
     | '/inventory'
     | '/onboarding'
     | '/recalls'
@@ -237,12 +249,12 @@ export interface FileRouteTypes {
     | '/staff'
     | '/treatments'
     | '/waitlist'
-    | '/'
     | '/patients/$id'
     | '/platform/clinics'
     | '/patients'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
     | '/auth'
     | '/book'
@@ -251,6 +263,7 @@ export interface FileRouteTypes {
     | '/_authenticated/billing'
     | '/_authenticated/bookings'
     | '/_authenticated/communications'
+    | '/_authenticated/dashboard'
     | '/_authenticated/inventory'
     | '/_authenticated/onboarding'
     | '/_authenticated/recalls'
@@ -259,13 +272,13 @@ export interface FileRouteTypes {
     | '/_authenticated/staff'
     | '/_authenticated/treatments'
     | '/_authenticated/waitlist'
-    | '/_authenticated/'
     | '/_authenticated/patients/$id'
     | '/_authenticated/platform/clinics'
     | '/_authenticated/patients/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   BookRoute: typeof BookRoute
@@ -310,12 +323,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
+    '/': {
+      id: '/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/waitlist': {
       id: '/_authenticated/waitlist'
@@ -373,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInventoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/communications': {
       id: '/_authenticated/communications'
       path: '/communications'
@@ -422,6 +442,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedBookingsRoute: typeof AuthenticatedBookingsRoute
   AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedRecallsRoute: typeof AuthenticatedRecallsRoute
@@ -430,7 +451,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedStaffRoute: typeof AuthenticatedStaffRoute
   AuthenticatedTreatmentsRoute: typeof AuthenticatedTreatmentsRoute
   AuthenticatedWaitlistRoute: typeof AuthenticatedWaitlistRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedPatientsIdRoute: typeof AuthenticatedPatientsIdRoute
   AuthenticatedPlatformClinicsRoute: typeof AuthenticatedPlatformClinicsRoute
   AuthenticatedPatientsIndexRoute: typeof AuthenticatedPatientsIndexRoute
@@ -440,6 +460,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedBookingsRoute: AuthenticatedBookingsRoute,
   AuthenticatedCommunicationsRoute: AuthenticatedCommunicationsRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedRecallsRoute: AuthenticatedRecallsRoute,
@@ -448,7 +469,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStaffRoute: AuthenticatedStaffRoute,
   AuthenticatedTreatmentsRoute: AuthenticatedTreatmentsRoute,
   AuthenticatedWaitlistRoute: AuthenticatedWaitlistRoute,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedPatientsIdRoute: AuthenticatedPatientsIdRoute,
   AuthenticatedPlatformClinicsRoute: AuthenticatedPlatformClinicsRoute,
   AuthenticatedPatientsIndexRoute: AuthenticatedPatientsIndexRoute,
@@ -458,6 +478,7 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   BookRoute: BookRoute,
