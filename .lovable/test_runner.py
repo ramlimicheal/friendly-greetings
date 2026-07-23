@@ -250,6 +250,9 @@ def run():
                 # succeeded
                 if kind == 'select':
                     got = 'allow' if rows else 'empty'
+                elif kind == 'forge':
+                    # forge query returns a row iff the forged value persisted
+                    got = 'allow' if rows else 'deny'
                 elif kind in ('mutate','rpc'):
                     # A mutate that matches 0 rows was silently RLS-filtered — treat
                     # as an effective denial (row is invisible/USING excluded).
