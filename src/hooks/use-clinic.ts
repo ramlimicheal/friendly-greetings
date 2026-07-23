@@ -75,7 +75,8 @@ export function useClinic() {
     async (clinicId: string) => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      await supabase.from("profiles").update({ active_clinic_id: clinicId }).eq("id", u.user.id);
+      const { error } = await supabase.rpc("switch_active_clinic", { _clinic_id: clinicId });
+      if (error) throw error;
       setActiveClinicId(clinicId);
       // Full reload so every query re-runs under the new clinic RLS scope.
       window.location.reload();
