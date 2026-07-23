@@ -209,7 +209,7 @@ function BookingForm({
         email: form.email.trim() || null,
         date_of_birth: form.date_of_birth || null,
         service_id: form.service_id || null,
-        preferred_provider: form.preferred_provider || selectedService?.default_provider || null,
+        preferred_provider: form.preferred_provider || null,
         preferred_date: form.preferred_date,
         preferred_time: form.preferred_time,
         reason: form.reason.trim() || null,
