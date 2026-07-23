@@ -1,0 +1,922 @@
+[
+  {
+    "persona": "owner_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "assistant_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "assistant_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "frontdesk_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "frontdesk_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "billing_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "billing_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "appointments_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "anon",
+    "resource": "patients",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table patients"
+  },
+  {
+    "persona": "anon",
+    "resource": "appointments",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table appointments"
+  },
+  {
+    "persona": "anon",
+    "resource": "clinical_notes",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table clinical_notes"
+  },
+  {
+    "persona": "anon",
+    "resource": "invoices",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table invoices"
+  },
+  {
+    "persona": "anon",
+    "resource": "payments",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table payments"
+  },
+  {
+    "persona": "anon",
+    "resource": "audit_log",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table audit_log"
+  },
+  {
+    "persona": "anon",
+    "resource": "clinic_members",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table clinic_members"
+  },
+  {
+    "persona": "anon",
+    "resource": "profiles",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table profiles"
+  },
+  {
+    "persona": "anon",
+    "resource": "patient_files",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table patient_files"
+  },
+  {
+    "persona": "anon",
+    "resource": "communications",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table communications"
+  },
+  {
+    "persona": "anon",
+    "resource": "treatment_plans",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table treatment_plans"
+  },
+  {
+    "persona": "anon",
+    "resource": "tooth_charts",
+    "op": "select",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table tooth_charts"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "assistant_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "assistant_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "frontdesk_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "frontdesk_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "billing_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "billing_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "appointments_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "frontdesk_a",
+    "resource": "patient_medical_fields",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "front_desk cannot modify medical fields"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "patient_medical_fields",
+    "op": "update",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "patient_medical_fields",
+    "op": "update",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "assistant_a",
+    "resource": "clinical_notes_sign",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "only owner/admin/dentist may sign clinical notes"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "clinical_notes_sign",
+    "op": "insert",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "signed_clinical_note",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "signed clinical notes are immutable"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "signed_clinical_note",
+    "op": "delete",
+    "status": "pass",
+    "actual": "deny",
+    "note": "signed clinical notes cannot be deleted"
+  },
+  {
+    "persona": "assistant_a",
+    "resource": "treatment_plan_finalize",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "assistants cannot finalize treatment plans"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "treatment_plan_finalize",
+    "op": "update",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "billing_a",
+    "resource": "clinical_notes_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"clinical_notes\""
+  },
+  {
+    "persona": "billing_a",
+    "resource": "tooth_charts_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"tooth_charts\""
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "patients_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"patients\""
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "appointments_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"appointments\""
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "clinical_notes_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"clinical_notes\""
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "invoices_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for sequence invoices_number_seq"
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "payments_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"payments\""
+  },
+  {
+    "persona": "auditor_a",
+    "resource": "patient_files_new",
+    "op": "insert",
+    "status": "fail",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "invoices_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=2"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "invoices_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for sequence invoices_number_seq"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "payments_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"payments\""
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "invoices_clinic_a",
+    "op": "select",
+    "status": "fail",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "invoices_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for sequence invoices_number_seq"
+  },
+  {
+    "persona": "hygienist_a",
+    "resource": "payments_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"payments\""
+  },
+  {
+    "persona": "owner_a",
+    "resource": "invoices_new",
+    "op": "insert",
+    "status": "fail",
+    "actual": "deny",
+    "note": "permission denied for sequence invoices_number_seq"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "invoices_new",
+    "op": "insert",
+    "status": "fail",
+    "actual": "deny",
+    "note": "permission denied for sequence invoices_number_seq"
+  },
+  {
+    "persona": "billing_a",
+    "resource": "invoices_new",
+    "op": "insert",
+    "status": "fail",
+    "actual": "deny",
+    "note": "permission denied for sequence invoices_number_seq"
+  },
+  {
+    "persona": "frontdesk_a",
+    "resource": "invoices_new",
+    "op": "insert",
+    "status": "fail",
+    "actual": "deny",
+    "note": "permission denied for sequence invoices_number_seq"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "issued_invoice",
+    "op": "delete",
+    "status": "pass",
+    "actual": "deny",
+    "note": "only draft invoices may be deleted"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "payment_row",
+    "op": "delete",
+    "status": "pass",
+    "actual": "deny",
+    "note": "rows=0"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "audit_log",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table audit_log"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "audit_log",
+    "op": "delete",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for table audit_log"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "patient_clinic_move",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "clinic_id is immutable"
+  },
+  {
+    "persona": "inactive_mem",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "clinic_c_mem",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "clinic_c_mem",
+    "resource": "patients_clinic_c",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "no_member",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "dual_active_a",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dual_active_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "super_admin",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "super_admin",
+    "resource": "clinical_notes_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "support_agent",
+    "resource": "patients_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patients_self",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patients_clinic_b",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "treatment_plan_visible",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "treatment_plan_hidden",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patient_files_visible",
+    "op": "select",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patient_files_staff_only",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "clinical_notes_clinic_a",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "audit_log",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "clinic_members",
+    "op": "select",
+    "status": "pass",
+    "actual": "empty",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patients_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"patients\""
+  },
+  {
+    "persona": "portal_a",
+    "resource": "appointments_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"appointments\""
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patient_medical_fields",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "rows=0"
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patient_files_new",
+    "op": "insert",
+    "status": "pass",
+    "actual": "deny",
+    "note": "new row violates row-level security policy for table \"patient_files\""
+  },
+  {
+    "persona": "portal_a",
+    "resource": "patient_portal_users_self",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "rows=0"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "clinical_note_forge_created_by",
+    "op": "insert",
+    "status": "fail",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "clinical_note_forge_signed_by",
+    "op": "insert",
+    "status": "fail",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "profiles_self_elevate_platform_role",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "platform_role can only be changed by a platform operation"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "profiles_self_active_clinic_direct",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "active_clinic_id must be changed via public.switch_active_clinic()"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "clinic_members_self_promote",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "rows=0"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "clinic_members_owner_touch",
+    "op": "update",
+    "status": "pass",
+    "actual": "deny",
+    "note": "admins cannot manage owner memberships"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "rpc.switch_active_clinic.self_own",
+    "op": "call",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "rpc.switch_active_clinic.foreign",
+    "op": "call",
+    "status": "pass",
+    "actual": "deny",
+    "note": "not a member of the requested clinic, or clinic is inactive"
+  },
+  {
+    "persona": "no_member",
+    "resource": "rpc.switch_active_clinic.foreign",
+    "op": "call",
+    "status": "pass",
+    "actual": "deny",
+    "note": "not a member of the requested clinic, or clinic is inactive"
+  },
+  {
+    "persona": "dentist_a",
+    "resource": "rpc.create_clinic_invitation",
+    "op": "call",
+    "status": "pass",
+    "actual": "deny",
+    "note": "forbidden: owner or admin membership required"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "rpc.create_clinic_invitation",
+    "op": "call",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "admin_a",
+    "resource": "rpc.create_clinic_invitation.owner_role",
+    "op": "call",
+    "status": "pass",
+    "actual": "deny",
+    "note": "admins cannot issue owner invitations"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "rpc.set_platform_role.execute",
+    "op": "call",
+    "status": "pass",
+    "actual": "deny",
+    "note": "permission denied for function set_platform_role"
+  },
+  {
+    "persona": "anon",
+    "resource": "rpc.submit_booking_request",
+    "op": "call",
+    "status": "fail",
+    "actual": "error:UndefinedColumn",
+    "note": "column \"patient_name\" of relation \"booking_requests\" does not exist"
+  },
+  {
+    "persona": "anon",
+    "resource": "rpc.public_list_clinic_services",
+    "op": "call",
+    "status": "pass",
+    "actual": "allow",
+    "note": "rows=1"
+  },
+  {
+    "persona": "owner_a",
+    "resource": "rpc.platform_clinic_stats",
+    "op": "call",
+    "status": "pass",
+    "actual": "deny",
+    "note": "forbidden"
+  }
+]
