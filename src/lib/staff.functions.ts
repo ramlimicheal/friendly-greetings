@@ -1,188 +1,216 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export type AppRole = "admin" | "dentist" | "hygienist" | "front_desk";
+export type ClinicRole =
+  | "owner"
+  | "admin"
+  | "dentist"
+  | "hygienist"
+  | "assistant"
+  | "front_desk"
+  | "billing_specialist"
+  | "read_only_auditor";
 
 export type StaffMember = {
-  id: string;
-  email: string | null;
+  user_id: string;
   full_name: string | null;
+  email: string | null;
+  role: ClinicRole;
   is_active: boolean;
-  roles: AppRole[];
   created_at: string;
 };
 
 export type Invitation = {
   id: string;
   email: string;
-  role: AppRole;
-  token: string;
+  clinic_role: ClinicRole;
   expires_at: string;
   used_at: string | null;
+  used_by: string | null;
+  revoked_at: string | null;
+  revoked_by: string | null;
+  invited_by: string | null;
   created_at: string;
 };
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden: admin role required");
-}
+const clinicIdValidator = (input: { clinic_id: string }) => {
+  const id = String(input?.clinic_id ?? "").trim();
+  if (!/^[0-9a-fA-F-]{36}$/.test(id)) throw new Error("Invalid clinic id");
+  return { clinic_id: id };
+};
 
-export const listStaff = createServerFn({ method: "GET" })
+// ---------------------------------------------------------------------------
+// Reads
+// ---------------------------------------------------------------------------
+
+export const listStaff = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profiles, error: pErr } = await supabaseAdmin
-      .from("profiles")
-      .select("id, email, full_name, is_active, created_at")
-      .order("created_at", { ascending: true });
-    if (pErr) throw new Error(pErr.message);
-    const { data: roles, error: rErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id, role");
-    if (rErr) throw new Error(rErr.message);
-    const roleMap = new Map<string, AppRole[]>();
-    (roles ?? []).forEach((r) => {
-      const list = roleMap.get(r.user_id) ?? [];
-      list.push(r.role as AppRole);
-      roleMap.set(r.user_id, list);
+  .inputValidator(clinicIdValidator)
+  .handler(async ({ data, context }): Promise<StaffMember[]> => {
+    const { data: rows, error } = await context.supabase.rpc("list_clinic_staff", {
+      _clinic_id: data.clinic_id,
     });
-    return (profiles ?? []).map((p) => ({
-      id: p.id,
-      email: p.email,
-      full_name: p.full_name,
-      is_active: p.is_active,
-      created_at: p.created_at,
-      roles: roleMap.get(p.id) ?? [],
-    })) as StaffMember[];
-  });
-
-export const listInvitations = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    const { data, error } = await context.supabase
-      .from("invitations")
-      .select("*")
-      .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as Invitation[];
+    return (rows ?? []) as StaffMember[];
   });
 
+export const listInvitations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(clinicIdValidator)
+  .handler(async ({ data, context }): Promise<Invitation[]> => {
+    const { data: rows, error } = await context.supabase.rpc("list_clinic_invitations", {
+      _clinic_id: data.clinic_id,
+    });
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as Invitation[];
+  });
+
+// ---------------------------------------------------------------------------
+// Invitation lifecycle
+// ---------------------------------------------------------------------------
+
+/** Returns the raw token exactly once — surface it immediately to the caller. */
 export const createInvitation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { email: string; role: AppRole }) => {
-    const email = String(input.email ?? "").trim().toLowerCase();
+  .inputValidator((input: { clinic_id: string; email: string; role: ClinicRole }) => {
+    const id = String(input?.clinic_id ?? "").trim();
+    if (!/^[0-9a-fA-F-]{36}$/.test(id)) throw new Error("Invalid clinic id");
+    const email = String(input?.email ?? "").trim().toLowerCase();
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error("Invalid email");
-    const allowed: AppRole[] = ["admin", "dentist", "hygienist", "front_desk"];
+    const allowed: ClinicRole[] = [
+      "owner",
+      "admin",
+      "dentist",
+      "hygienist",
+      "assistant",
+      "front_desk",
+      "billing_specialist",
+      "read_only_auditor",
+    ];
     if (!allowed.includes(input.role)) throw new Error("Invalid role");
-    return { email, role: input.role };
+    return { clinic_id: id, email, role: input.role };
   })
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    const { data: row, error } = await context.supabase
-      .from("invitations")
-      .insert({ email: data.email, role: data.role, invited_by: context.userId })
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    await context.supabase.from("audit_log").insert({
-      user_id: context.userId,
-      action: "invite.create",
-      entity_type: "invitation",
-      entity_id: row.id,
-      metadata: { email: data.email, role: data.role },
+  .handler(async ({ data, context }): Promise<{ id: string; raw_token: string }> => {
+    const { data: rows, error } = await context.supabase.rpc("create_clinic_invitation", {
+      _clinic_id: data.clinic_id,
+      _email: data.email,
+      _role: data.role,
     });
-    return row as Invitation;
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    if (!row?.id || !row?.raw_token) throw new Error("Invitation creation failed");
+    return { id: row.id as string, raw_token: row.raw_token as string };
   });
 
 export const revokeInvitation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id: string }) => input)
+  .inputValidator((input: { id: string }) => {
+    const id = String(input?.id ?? "").trim();
+    if (!/^[0-9a-fA-F-]{36}$/.test(id)) throw new Error("Invalid invitation id");
+    return { id };
+  })
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    const { error } = await context.supabase.from("invitations").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
-    await context.supabase.from("audit_log").insert({
-      user_id: context.userId,
-      action: "invite.revoke",
-      entity_type: "invitation",
-      entity_id: data.id,
-      metadata: {},
+    const { error } = await context.supabase.rpc("revoke_clinic_invitation", {
+      _invitation_id: data.id,
     });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
+/** Public — safe to call before signup. Returns only email + role, never IDs. */
+export const peekInvitation = createServerFn({ method: "POST" })
+  .inputValidator((input: { token: string }) => {
+    const token = String(input?.token ?? "").trim();
+    if (token.length < 16) throw new Error("Invalid token");
+    return { token };
+  })
+  .handler(
+    async ({ data }): Promise<
+      | { valid: true; email: string; role: ClinicRole }
+      | { valid: false; reason: "not_found" | "used" | "revoked" | "expired" | "invalid" }
+    > => {
+      // Use the unauthenticated Supabase client — this RPC is granted to anon.
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: rows, error } = await supabase.rpc("peek_clinic_invitation", {
+        _raw_token: data.token,
+      });
+      if (error) throw new Error(error.message);
+      const row = Array.isArray(rows) ? rows[0] : rows;
+      if (!row || !row.valid) {
+        const reason =
+          (row?.reason as "not_found" | "used" | "revoked" | "expired" | "invalid" | undefined) ??
+          "not_found";
+        return { valid: false, reason };
+      }
+      return { valid: true, email: row.email as string, role: row.role as ClinicRole };
+    },
+  );
+
+export const acceptInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { token: string }) => {
+    const token = String(input?.token ?? "").trim();
+    if (token.length < 16) throw new Error("Invalid token");
+    return { token };
+  })
+  .handler(async ({ data, context }): Promise<{ clinic_id: string; role: ClinicRole }> => {
+    const { data: rows, error } = await context.supabase.rpc("accept_clinic_invitation", {
+      _raw_token: data.token,
+    });
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    if (!row?.clinic_id) throw new Error("Acceptance failed");
+    // Set the accepted clinic as the caller's active clinic.
+    await context.supabase.rpc("switch_active_clinic", { _clinic_id: row.clinic_id });
+    return { clinic_id: row.clinic_id as string, role: row.role as ClinicRole };
+  });
+
+// ---------------------------------------------------------------------------
+// Member management
+// ---------------------------------------------------------------------------
+
 export const updateStaffRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { user_id: string; role: AppRole }) => input)
+  .inputValidator((input: { clinic_id: string; user_id: string; role: ClinicRole }) => {
+    if (!/^[0-9a-fA-F-]{36}$/.test(input?.clinic_id ?? "")) throw new Error("Invalid clinic id");
+    if (!/^[0-9a-fA-F-]{36}$/.test(input?.user_id ?? "")) throw new Error("Invalid user id");
+    return input;
+  })
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    // Replace all roles with the single selected role (simple model)
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
-    const { error } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: data.user_id, role: data.role });
-    if (error) throw new Error(error.message);
-    await context.supabase.from("audit_log").insert({
-      user_id: context.userId,
-      action: "staff.role_change",
-      entity_type: "user",
-      entity_id: data.user_id,
-      metadata: { role: data.role },
+    const { error } = await context.supabase.rpc("set_clinic_member_role", {
+      _clinic_id: data.clinic_id,
+      _user_id: data.user_id,
+      _role: data.role,
     });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const setStaffActive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { user_id: string; is_active: boolean }) => input)
+  .inputValidator(
+    (input: { clinic_id: string; user_id: string; is_active: boolean }) => {
+      if (!/^[0-9a-fA-F-]{36}$/.test(input?.clinic_id ?? "")) throw new Error("Invalid clinic id");
+      if (!/^[0-9a-fA-F-]{36}$/.test(input?.user_id ?? "")) throw new Error("Invalid user id");
+      return input;
+    },
+  )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    // Prevent self-deactivation
     if (data.user_id === context.userId && !data.is_active) {
-      throw new Error("You cannot deactivate your own account");
+      throw new Error("You cannot deactivate your own membership");
     }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({ is_active: data.is_active })
-      .eq("id", data.user_id);
-    if (error) throw new Error(error.message);
-    await context.supabase.from("audit_log").insert({
-      user_id: context.userId,
-      action: data.is_active ? "staff.activate" : "staff.deactivate",
-      entity_type: "user",
-      entity_id: data.user_id,
-      metadata: {},
+    const { error } = await context.supabase.rpc("set_clinic_member_active", {
+      _clinic_id: data.clinic_id,
+      _user_id: data.user_id,
+      _active: data.is_active,
     });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-/** Public: look up an invitation by token — used on signup page to allow account creation. */
-export const getInvitationByToken = createServerFn({ method: "GET" })
-  .inputValidator((input: { token: string }) => input)
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
-      .from("invitations")
-      .select("email, role, expires_at, used_at")
-      .eq("token", data.token)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!row) return { valid: false as const, reason: "not_found" as const };
-    if (row.used_at) return { valid: false as const, reason: "used" as const };
-    if (new Date(row.expires_at).getTime() < Date.now())
-      return { valid: false as const, reason: "expired" as const };
-    return { valid: true as const, email: row.email, role: row.role as AppRole };
-  });
+// ---------------------------------------------------------------------------
+// Audit log — scoped to the caller's active clinic via RLS on audit_log.
+// ---------------------------------------------------------------------------
 
 export type AuditRow = {
   id: string;
@@ -195,26 +223,44 @@ export type AuditRow = {
   actor_email: string | null;
 };
 
-export const listAuditLog = createServerFn({ method: "GET" })
+export const listAuditLog = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AuditRow[]> => {
-    await assertAdmin(context.supabase, context.userId);
+  .inputValidator(clinicIdValidator)
+  .handler(async ({ data, context }): Promise<AuditRow[]> => {
+    // Verify caller is an owner/admin of the clinic before returning anything.
+    // list_clinic_staff performs that check and errors otherwise.
+    await context.supabase.rpc("list_clinic_staff", { _clinic_id: data.clinic_id });
+
     const { data: logs, error } = await context.supabase
       .from("audit_log")
       .select("id, user_id, action, entity_type, entity_id, created_at")
+      .eq("clinic_id", data.clinic_id)
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error(error.message);
+
     const rows = logs ?? [];
     const userIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean))) as string[];
     const nameMap = new Map<string, { full_name: string | null; email: string | null }>();
     if (userIds.length > 0) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: profs } = await supabaseAdmin
-        .from("profiles")
-        .select("id, full_name, email")
-        .in("id", userIds);
-      (profs ?? []).forEach((p) => nameMap.set(p.id, { full_name: p.full_name, email: p.email }));
+      // Lookup names via profiles RPC-safe fallback: only clinic members' profiles
+      // are visible under Stage A RLS, so join through clinic_members.
+      const { data: members } = await context.supabase
+        .from("clinic_members")
+        .select("user_id")
+        .eq("clinic_id", data.clinic_id)
+        .in("user_id", userIds);
+      const memberIds = new Set((members ?? []).map((m) => m.user_id));
+      const visibleIds = userIds.filter((id) => memberIds.has(id));
+      if (visibleIds.length > 0) {
+        const { data: profs } = await context.supabase
+          .from("profiles")
+          .select("id, full_name, email")
+          .in("id", visibleIds);
+        (profs ?? []).forEach((p) =>
+          nameMap.set(p.id, { full_name: p.full_name, email: p.email }),
+        );
+      }
     }
     return rows.map((r) => ({
       id: r.id,
@@ -227,5 +273,3 @@ export const listAuditLog = createServerFn({ method: "GET" })
       actor_email: r.user_id ? nameMap.get(r.user_id)?.email ?? null : null,
     }));
   });
-
-
