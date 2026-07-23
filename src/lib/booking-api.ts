@@ -12,6 +12,7 @@ export const BOOKING_STATUSES = ["pending", "scheduled", "declined", "cancelled"
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
 export async function listActiveServices(): Promise<ServiceRow[]> {
+  // Authenticated staff path. RLS restricts to the active clinic.
   const { data, error } = await supabase
     .from("services")
     .select("*")
@@ -22,11 +23,43 @@ export async function listActiveServices(): Promise<ServiceRow[]> {
   return data ?? [];
 }
 
+/** Public unauthenticated listing via SECURITY DEFINER RPC. */
+export async function listPublicClinicServices(clinicSlug: string): Promise<
+  Array<{ id: string; name: string; description: string | null; duration_min: number }>
+> {
+  const { data, error } = await supabase.rpc("public_list_clinic_services", { _slug: clinicSlug });
+  if (error) throw error;
+  return (data ?? []) as Array<{ id: string; name: string; description: string | null; duration_min: number }>;
+}
+
 export async function submitBookingRequest(input: BookingRequestInsert): Promise<BookingRequestRow> {
+  // Authenticated (staff) path.
   const { data, error } = await supabase.from("booking_requests").insert(input).select().single();
   if (error) throw error;
   return data;
 }
+
+/** Public unauthenticated submission via SECURITY DEFINER RPC. Returns the new booking id. */
+export async function submitPublicBookingRequest(input: {
+  clinic_slug: string;
+  patient_name: string;
+  email: string;
+  phone?: string | null;
+  preferred_at: string; // ISO
+  reason?: string | null;
+}): Promise<string> {
+  const { data, error } = await supabase.rpc("submit_booking_request", {
+    _clinic_slug: input.clinic_slug,
+    _patient_name: input.patient_name,
+    _email: input.email,
+    _phone: input.phone ?? null,
+    _preferred_at: input.preferred_at,
+    _reason: input.reason ?? null,
+  });
+  if (error) throw error;
+  return data as unknown as string;
+}
+
 
 export async function submitIntakeForm(input: IntakeFormInsert): Promise<IntakeFormRow> {
   const payload: IntakeFormInsert = {
