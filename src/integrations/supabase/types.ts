@@ -1893,6 +1893,14 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      set_platform_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["platform_role"]
+          _target_user: string
+        }
+        Returns: undefined
+      }
+      switch_active_clinic: { Args: { _clinic_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "dentist" | "hygienist" | "front_desk"
