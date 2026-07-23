@@ -54,7 +54,7 @@ export function useClinic() {
     if (!active || !list.some((m) => m.clinic_id === active)) {
       active = list[0]?.clinic_id ?? null;
       if (active) {
-        await supabase.from("profiles").update({ active_clinic_id: active }).eq("id", u.user.id);
+        await supabase.rpc("switch_active_clinic", { _clinic_id: active });
       }
     }
     setActiveClinicId(active);
