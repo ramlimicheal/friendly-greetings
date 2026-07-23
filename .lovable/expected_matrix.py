@@ -122,13 +122,15 @@ for r in ['patients_new','appointments_new','clinical_notes_new',
           'invoices_new','payments_new','patient_files_new']:
     E('auditor_a', r, 'insert', 'deny', 'auditor has zero mutation paths')
 
-# Dentist/hygienist financial: view yes, mutate no
+# Financial read/mutate:
+# - dentist may view financials (per permissions.ts billing.view) but not mutate
+# - hygienist is intentionally excluded from financial reads (permissions.ts)
+E('dentist_a',   'invoices_clinic_a', 'select', 'allow', 'dentist may view financials')
+E('hygienist_a', 'invoices_clinic_a', 'select', 'empty',
+  'hygienist has no billing.view — spec resolved to deny financial reads')
 for p in ['dentist_a','hygienist_a']:
-    E(p, 'invoices_clinic_a', 'select', 'allow', 'clinicians may view financials')
-    E(p, 'invoices_new',      'insert', 'deny',
-      'clinicians may not mutate financials')
-    E(p, 'payments_new',      'insert', 'deny',
-      'clinicians may not mutate financials')
+    E(p, 'invoices_new', 'insert', 'deny', 'clinicians may not mutate financials')
+    E(p, 'payments_new', 'insert', 'deny', 'clinicians may not mutate financials')
 
 # Financial roles may create invoices
 for p in ['owner_a','admin_a','billing_a','frontdesk_a']:

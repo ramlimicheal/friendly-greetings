@@ -140,15 +140,23 @@ def stmt_for(key, uid):
                 "UPDATE public.patients SET clinic_id=%s WHERE id=%s RETURNING id",
                 (CLINIC_B, PATIENT_A))
     if resource == 'clinical_note_forge_created_by' and op == 'insert':
-        return ('mutate',
-                "INSERT INTO public.clinical_notes (clinic_id, patient_id, subjective, created_by) "
-                "VALUES (%s,%s,'t',%s) RETURNING created_by",
-                (CLINIC_A, PATIENT_A, OWNER_A_UID))
+        # Forgery is "denied" if the persisted created_by is NOT the forged UID.
+        # The trigger silently overrides created_by := auth.uid(), which is a
+        # stronger guarantee than raising. We assert that the forged value did
+        # not persist: SELECT returns 0 rows when the forgery was blocked.
+        return ('forge',
+                "WITH ins AS (INSERT INTO public.clinical_notes "
+                "(clinic_id, patient_id, subjective, created_by) "
+                "VALUES (%s,%s,'t',%s) RETURNING created_by) "
+                "SELECT 1 FROM ins WHERE created_by = %s",
+                (CLINIC_A, PATIENT_A, OWNER_A_UID, OWNER_A_UID))
     if resource == 'clinical_note_forge_signed_by' and op == 'insert':
-        return ('mutate',
-                "INSERT INTO public.clinical_notes (clinic_id, patient_id, subjective, signed_at, signed_by) "
-                "VALUES (%s,%s,'t',now(),%s) RETURNING id",
-                (CLINIC_A, PATIENT_A, OWNER_A_UID))
+        return ('forge',
+                "WITH ins AS (INSERT INTO public.clinical_notes "
+                "(clinic_id, patient_id, subjective, signed_at, signed_by) "
+                "VALUES (%s,%s,'t',now(),%s) RETURNING signed_by) "
+                "SELECT 1 FROM ins WHERE signed_by = %s",
+                (CLINIC_A, PATIENT_A, OWNER_A_UID, OWNER_A_UID))
     if resource == 'profiles_self_elevate_platform_role' and op == 'update':
         return ('mutate',
                 "UPDATE public.profiles SET platform_role='super_admin' WHERE id=%s RETURNING id", (U,))
@@ -242,6 +250,9 @@ def run():
                 # succeeded
                 if kind == 'select':
                     got = 'allow' if rows else 'empty'
+                elif kind == 'forge':
+                    # forge query returns a row iff the forged value persisted
+                    got = 'allow' if rows else 'deny'
                 elif kind in ('mutate','rpc'):
                     # A mutate that matches 0 rows was silently RLS-filtered — treat
                     # as an effective denial (row is invisible/USING excluded).
@@ -300,8 +311,31 @@ if __name__ == '__main__':
             expect = EXPECTATIONS[key][0]
             print(f"  [{persona}/{resource}/{op}] expected={expect} got={got}  {note}")
 
-    with open('/tmp/pgtest/harness/results.json','w') as f:
-        json.dump([
-            {'persona':k[0],'resource':k[1],'op':k[2],'status':s,'actual':a,'note':n}
-            for (k,s,a,n) in results
-        ], f, indent=2)
+    UNEXECUTED = [
+        {'suite': 'storage.objects (clinic-files bucket)',
+         'reason': 'requires live Supabase Storage API; SQL harness cannot exercise upload/download.'},
+        {'suite': 'realtime cross-clinic event isolation',
+         'reason': 'requires live Realtime server; publication + RLS presence checked, but subscription events not observed.'},
+    ]
+    print()
+    print(f"--- unexecuted external integrations (NOT counted as passes) : {len(UNEXECUTED)} ---")
+    for u in UNEXECUTED:
+        print(f"  · {u['suite']}: {u['reason']}")
+
+    out_path = os.environ.get('STAGE_D_RESULTS_JSON', '/tmp/pgtest/harness/results.json')
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, 'w') as f:
+        json.dump({
+            'totals': {
+                'passed': counts['pass'],
+                'failed': counts['fail'],
+                'skipped': counts['skipped'],
+                'unexecuted_external': len(UNEXECUTED),
+                'total_assertions': len(results),
+            },
+            'unexecuted_external': UNEXECUTED,
+            'results': [
+                {'persona':k[0],'resource':k[1],'op':k[2],'status':s,'actual':a,'note':n}
+                for (k,s,a,n) in results
+            ],
+        }, f, indent=2)
