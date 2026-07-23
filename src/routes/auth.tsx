@@ -4,14 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { Plus, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { getInvitationByToken, type AppRole } from "@/lib/staff.functions";
+import { peekInvitation, acceptInvitation, type ClinicRole } from "@/lib/staff.functions";
 
-type Search = { invite?: string; bootstrap?: string };
+type Search = { invite?: string };
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     invite: typeof s.invite === "string" ? s.invite : undefined,
-    bootstrap: typeof s.bootstrap === "string" ? s.bootstrap : undefined,
   }),
   head: () => ({
     meta: [
@@ -33,34 +32,56 @@ function AuthFallback() {
   return <div className="min-h-screen bg-background text-foreground" />;
 }
 
+const ROLE_LABEL: Record<ClinicRole, string> = {
+  owner: "Owner",
+  admin: "Admin",
+  dentist: "Dentist",
+  hygienist: "Hygienist",
+  assistant: "Assistant",
+  front_desk: "Front desk",
+  billing_specialist: "Billing",
+  read_only_auditor: "Read-only auditor",
+};
+
 function AuthPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/auth" });
   const inviteToken = search.invite;
-  const bootstrap = search.bootstrap === "1";
-  const [mode, setMode] = useState<Mode>(inviteToken || bootstrap ? "signup" : "signin");
+  const [mode, setMode] = useState<Mode>(inviteToken ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [inviteRole, setInviteRole] = useState<AppRole | null>(null);
+  const [inviteRole, setInviteRole] = useState<ClinicRole | null>(null);
   const [inviteChecking, setInviteChecking] = useState(false);
   const [inviteInvalid, setInviteInvalid] = useState<string | null>(null);
 
-  const getInviteFn = useServerFn(getInvitationByToken);
+  const peekFn = useServerFn(peekInvitation);
+  const acceptFn = useServerFn(acceptInvitation);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/dashboard" });
+      if (!data.user) return;
+      if (inviteToken) {
+        // Already signed in and hit an invite link — try to attach the membership.
+        acceptFn({ data: { token: inviteToken } })
+          .then(() => navigate({ to: "/dashboard" }))
+          .catch((e: Error) => {
+            setInviteInvalid(e.message);
+          });
+      } else {
+        navigate({ to: "/dashboard" });
+      }
     });
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!inviteToken) return;
     setInviteChecking(true);
-    getInviteFn({ data: { token: inviteToken } })
+    peekFn({ data: { token: inviteToken } })
       .then((res) => {
         if (res.valid) {
           setEmail(res.email);
@@ -73,19 +94,34 @@ function AuthPage() {
               ? "This invitation has expired."
               : res.reason === "used"
               ? "This invitation has already been used."
+              : res.reason === "revoked"
+              ? "This invitation has been revoked."
               : "Invitation not found.",
           );
         }
       })
       .catch((e: Error) => setInviteInvalid(e.message))
       .finally(() => setInviteChecking(false));
-  }, [inviteToken, getInviteFn]);
+  }, [inviteToken, peekFn]);
+
+  const afterSignedIn = async () => {
+    if (!inviteToken) {
+      navigate({ to: "/dashboard" });
+      return;
+    }
+    try {
+      await acceptFn({ data: { token: inviteToken } });
+      navigate({ to: "/dashboard" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not accept invitation");
+    }
+  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setInfo(null);
-    if (mode === "signup" && !inviteToken && !bootstrap) {
+    if (mode === "signup" && !inviteToken) {
       setError("Sign-ups are invite only. Ask your clinic admin for an invitation link.");
       return;
     }
@@ -100,21 +136,23 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/auth${
+              inviteToken ? `?invite=${encodeURIComponent(inviteToken)}` : ""
+            }`,
             data: { full_name: fullName },
           },
         });
         if (err) throw err;
         const { data: u } = await supabase.auth.getUser();
         if (u.user) {
-          navigate({ to: "/dashboard" });
+          await afterSignedIn();
         } else {
-          setInfo("Check your email to confirm your account.");
+          setInfo("Check your email to confirm your account, then return to this link.");
         }
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err) throw err;
-        navigate({ to: "/dashboard" });
+        await afterSignedIn();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -125,28 +163,22 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setError(null);
-    if (mode === "signup" && !inviteToken && !bootstrap) {
+    if (mode === "signup" && !inviteToken) {
       setError("Sign-ups are invite only. Ask your clinic admin for an invitation link.");
       return;
     }
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
+    const redirect = `${window.location.origin}/auth${
+      inviteToken ? `?invite=${encodeURIComponent(inviteToken)}` : ""
+    }`;
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: redirect });
     if (result.error) {
       setError(result.error instanceof Error ? result.error.message : String(result.error));
       setBusy(false);
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/dashboard" });
-  };
-
-  const roleLabel: Record<AppRole, string> = {
-    admin: "Admin",
-    dentist: "Dentist",
-    hygienist: "Hygienist",
-    front_desk: "Front desk",
+    await afterSignedIn();
   };
 
   return (
@@ -170,9 +202,7 @@ function AuthPage() {
             {mode === "signin"
               ? "Welcome back — sign in to continue."
               : inviteRole
-              ? `Invited as ${roleLabel[inviteRole]}. Complete your account below.`
-              : bootstrap
-              ? "First user becomes the clinic admin."
+              ? `Invited as ${ROLE_LABEL[inviteRole]}. Complete your account below.`
               : "Sign-ups are invite only."}
           </p>
 
