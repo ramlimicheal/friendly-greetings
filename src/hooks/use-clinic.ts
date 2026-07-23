@@ -54,7 +54,7 @@ export function useClinic() {
     if (!active || !list.some((m) => m.clinic_id === active)) {
       active = list[0]?.clinic_id ?? null;
       if (active) {
-        await supabase.from("profiles").update({ active_clinic_id: active }).eq("id", u.user.id);
+        await supabase.rpc("switch_active_clinic", { _clinic_id: active });
       }
     }
     setActiveClinicId(active);
@@ -75,7 +75,8 @@ export function useClinic() {
     async (clinicId: string) => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
-      await supabase.from("profiles").update({ active_clinic_id: clinicId }).eq("id", u.user.id);
+      const { error } = await supabase.rpc("switch_active_clinic", { _clinic_id: clinicId });
+      if (error) throw error;
       setActiveClinicId(clinicId);
       // Full reload so every query re-runs under the new clinic RLS scope.
       window.location.reload();

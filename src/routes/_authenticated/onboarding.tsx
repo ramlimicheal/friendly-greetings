@@ -64,7 +64,7 @@ function OnboardingPage() {
         .insert({ clinic_id: clinic.id, user_id: u.user.id, role: "owner" });
       if (eMem) throw eMem;
       // 4. Activate this clinic on profile
-      await supabase.from("profiles").update({ active_clinic_id: clinic.id }).eq("id", u.user.id);
+      await supabase.rpc("switch_active_clinic", { _clinic_id: clinic.id });
       await reload();
       navigate({ to: "/dashboard" });
     } catch (e) {
