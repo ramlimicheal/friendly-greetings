@@ -140,15 +140,23 @@ def stmt_for(key, uid):
                 "UPDATE public.patients SET clinic_id=%s WHERE id=%s RETURNING id",
                 (CLINIC_B, PATIENT_A))
     if resource == 'clinical_note_forge_created_by' and op == 'insert':
-        return ('mutate',
-                "INSERT INTO public.clinical_notes (clinic_id, patient_id, subjective, created_by) "
-                "VALUES (%s,%s,'t',%s) RETURNING created_by",
-                (CLINIC_A, PATIENT_A, OWNER_A_UID))
+        # Forgery is "denied" if the persisted created_by is NOT the forged UID.
+        # The trigger silently overrides created_by := auth.uid(), which is a
+        # stronger guarantee than raising. We assert that the forged value did
+        # not persist: SELECT returns 0 rows when the forgery was blocked.
+        return ('forge',
+                "WITH ins AS (INSERT INTO public.clinical_notes "
+                "(clinic_id, patient_id, subjective, created_by) "
+                "VALUES (%s,%s,'t',%s) RETURNING created_by) "
+                "SELECT 1 FROM ins WHERE created_by = %s",
+                (CLINIC_A, PATIENT_A, OWNER_A_UID, OWNER_A_UID))
     if resource == 'clinical_note_forge_signed_by' and op == 'insert':
-        return ('mutate',
-                "INSERT INTO public.clinical_notes (clinic_id, patient_id, subjective, signed_at, signed_by) "
-                "VALUES (%s,%s,'t',now(),%s) RETURNING id",
-                (CLINIC_A, PATIENT_A, OWNER_A_UID))
+        return ('forge',
+                "WITH ins AS (INSERT INTO public.clinical_notes "
+                "(clinic_id, patient_id, subjective, signed_at, signed_by) "
+                "VALUES (%s,%s,'t',now(),%s) RETURNING signed_by) "
+                "SELECT 1 FROM ins WHERE signed_by = %s",
+                (CLINIC_A, PATIENT_A, OWNER_A_UID, OWNER_A_UID))
     if resource == 'profiles_self_elevate_platform_role' and op == 'update':
         return ('mutate',
                 "UPDATE public.profiles SET platform_role='super_admin' WHERE id=%s RETURNING id", (U,))
