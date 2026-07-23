@@ -159,7 +159,7 @@ function BookingForm({
   services,
   onSubmit,
 }: {
-  services: ServiceRow[];
+  services: PublicService[];
   onSubmit: (data: {
     full_name: string;
     phone: string;
