@@ -175,14 +175,9 @@ export const impersonateClinic = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ clinic_id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({ active_clinic_id: data.clinic_id })
-      .eq("id", context.userId);
+    const { error } = await context.supabase.rpc("switch_active_clinic", { _clinic_id: data.clinic_id });
     if (error) throw new Error(error.message);
-    await supabaseAdmin.from("audit_log").insert({
-      user_id: context.userId,
+    await context.supabase.from("audit_log").insert({
       clinic_id: data.clinic_id,
       action: "platform.impersonate_clinic",
       entity_type: "clinic",
