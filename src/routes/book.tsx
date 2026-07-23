@@ -2,12 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check, CalendarClock, ClipboardList, Loader2 } from "lucide-react";
 import {
-  listActiveServices,
-  submitBookingRequest,
-  submitIntakeForm,
-  type ServiceRow,
+  listPublicClinicServices,
+  submitPublicBookingRequest,
   type BookingRequestRow,
 } from "@/lib/booking-api";
+
+const PUBLIC_CLINIC_SLUG = (import.meta.env.VITE_PUBLIC_BOOKING_SLUG as string | undefined) ?? "";
+
+type PublicService = { id: string; name: string; description: string | null; duration_min: number };
 
 export const Route = createFileRoute("/book")({
   head: () => ({
@@ -24,12 +26,19 @@ export const Route = createFileRoute("/book")({
 type Step = "booking" | "intake" | "done";
 
 function BookPage() {
-  const [services, setServices] = useState<ServiceRow[]>([]);
+  const [services, setServices] = useState<PublicService[]>([]);
   const [step, setStep] = useState<Step>("booking");
   const [booking, setBooking] = useState<BookingRequestRow | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
 
   useEffect(() => {
-    listActiveServices().then(setServices).catch((e) => console.error(e));
+    if (!PUBLIC_CLINIC_SLUG) {
+      setLoadErr("Online booking is not yet enabled for this site. Please call the clinic to schedule.");
+      return;
+    }
+    listPublicClinicServices(PUBLIC_CLINIC_SLUG)
+      .then((rows) => setServices(rows))
+      .catch((e) => setLoadErr(e instanceof Error ? e.message : "Unable to load services."));
   }, []);
 
   return (
@@ -47,23 +56,38 @@ function BookPage() {
       <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
         <Stepper step={step} />
 
-        {step === "booking" && (
+        {loadErr && (
+          <div className="mb-6 rounded-2xl bg-red-50 p-4 text-sm text-red-700">{loadErr}</div>
+        )}
+
+        {step === "booking" && !loadErr && (
           <BookingForm
             services={services}
             onSubmit={async (data) => {
-              const row = await submitBookingRequest(data);
-              setBooking(row);
-              setStep("intake");
-            }}
-          />
-        )}
-
-        {step === "intake" && booking && (
-          <IntakeForm
-            booking={booking}
-            onSkip={() => setStep("done")}
-            onSubmit={async (form) => {
-              await submitIntakeForm({ ...form, booking_request_id: booking.id });
+              const preferredAt = new Date(`${data.preferred_date}T${data.preferred_time}`).toISOString();
+              const id = await submitPublicBookingRequest({
+                clinic_slug: PUBLIC_CLINIC_SLUG,
+                patient_name: data.full_name,
+                email: data.email ?? "",
+                phone: data.phone,
+                preferred_at: preferredAt,
+                reason: data.reason,
+              });
+              // Local echo for the confirmation screen (row is not returned by the RPC).
+              setBooking({
+                id,
+                full_name: data.full_name,
+                phone: data.phone,
+                email: data.email,
+                date_of_birth: data.date_of_birth,
+                service_id: data.service_id,
+                preferred_provider: data.preferred_provider,
+                preferred_date: data.preferred_date,
+                preferred_time: data.preferred_time,
+                reason: data.reason,
+                is_new_patient: data.is_new_patient,
+                status: "pending",
+              } as unknown as BookingRequestRow);
               setStep("done");
             }}
           />
@@ -74,6 +98,7 @@ function BookPage() {
     </div>
   );
 }
+
 
 function Stepper({ step }: { step: Step }) {
   const items = [
@@ -134,7 +159,7 @@ function BookingForm({
   services,
   onSubmit,
 }: {
-  services: ServiceRow[];
+  services: PublicService[];
   onSubmit: (data: {
     full_name: string;
     phone: string;
@@ -184,7 +209,7 @@ function BookingForm({
         email: form.email.trim() || null,
         date_of_birth: form.date_of_birth || null,
         service_id: form.service_id || null,
-        preferred_provider: form.preferred_provider || selectedService?.default_provider || null,
+        preferred_provider: form.preferred_provider || null,
         preferred_date: form.preferred_date,
         preferred_time: form.preferred_time,
         reason: form.reason.trim() || null,

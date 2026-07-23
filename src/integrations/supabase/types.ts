@@ -1958,6 +1958,7 @@ export type Database = {
         }[]
       }
       can_access_current_clinic: { Args: never; Returns: boolean }
+      can_read_clinic: { Args: { _clinic_id: string }; Returns: boolean }
       check_appointment_conflict: {
         Args: {
           _chair: number
@@ -1998,6 +1999,13 @@ export type Database = {
       current_clinic_id: { Args: never; Returns: string }
       current_portal_clinic_id: { Args: never; Returns: string }
       current_portal_patient_id: { Args: never; Returns: string }
+      has_active_clinic_access: {
+        Args: {
+          _clinic_id: string
+          _roles: Database["public"]["Enums"]["clinic_role"][]
+        }
+        Returns: boolean
+      }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -2085,6 +2093,24 @@ export type Database = {
           valid: boolean
         }[]
       }
+      platform_clinic_stats: {
+        Args: { _clinic_ids: string[] }
+        Returns: {
+          appointment_count: number
+          clinic_id: string
+          member_count: number
+          patient_count: number
+        }[]
+      }
+      public_list_clinic_services: {
+        Args: { _slug: string }
+        Returns: {
+          description: string
+          duration_min: number
+          id: string
+          name: string
+        }[]
+      }
       revoke_clinic_invitation: {
         Args: { _invitation_id: string }
         Returns: undefined
@@ -2115,6 +2141,17 @@ export type Database = {
           _target_user: string
         }
         Returns: undefined
+      }
+      submit_booking_request: {
+        Args: {
+          _clinic_slug: string
+          _email: string
+          _patient_name: string
+          _phone: string
+          _preferred_at: string
+          _reason: string
+        }
+        Returns: string
       }
       switch_active_clinic: { Args: { _clinic_id: string }; Returns: undefined }
     }

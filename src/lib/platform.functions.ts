@@ -51,19 +51,18 @@ export const listPlatformClinics = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     const ids = (clinics ?? []).map((c: any) => c.id);
-    const [members, patients, appts] = await Promise.all([
-      supabaseAdmin.from("clinic_members").select("clinic_id").in("clinic_id", ids).eq("is_active", true),
-      supabaseAdmin.from("patients").select("clinic_id").in("clinic_id", ids),
-      supabaseAdmin.from("appointments").select("clinic_id").in("clinic_id", ids),
-    ]);
-    const tally = (rows: any[] | null) => {
-      const m = new Map<string, number>();
-      (rows ?? []).forEach((r) => m.set(r.clinic_id, (m.get(r.clinic_id) ?? 0) + 1));
-      return m;
-    };
-    const mem = tally(members.data);
-    const pat = tally(patients.data);
-    const app = tally(appts.data);
+    const statsMap = new Map<string, { member_count: number; patient_count: number; appointment_count: number }>();
+    if (ids.length > 0) {
+      const { data: stats, error: sErr } = await context.supabase.rpc("platform_clinic_stats", { _clinic_ids: ids });
+      if (sErr) throw new Error(sErr.message);
+      (stats ?? []).forEach((s: any) =>
+        statsMap.set(s.clinic_id, {
+          member_count: Number(s.member_count ?? 0),
+          patient_count: Number(s.patient_count ?? 0),
+          appointment_count: Number(s.appointment_count ?? 0),
+        }),
+      );
+    }
 
     return (clinics ?? []).map((c: any) => ({
       id: c.id,
@@ -77,11 +76,12 @@ export const listPlatformClinics = createServerFn({ method: "GET" })
       created_at: c.created_at,
       organization_id: c.organization_id,
       organization_name: c.organizations?.name ?? null,
-      member_count: mem.get(c.id) ?? 0,
-      patient_count: pat.get(c.id) ?? 0,
-      appointment_count: app.get(c.id) ?? 0,
+      member_count: statsMap.get(c.id)?.member_count ?? 0,
+      patient_count: statsMap.get(c.id)?.patient_count ?? 0,
+      appointment_count: statsMap.get(c.id)?.appointment_count ?? 0,
     })) as PlatformClinic[];
   });
+
 
 export const listPlatformOrganizations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -175,14 +175,9 @@ export const impersonateClinic = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ clinic_id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertSuperAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
-      .from("profiles")
-      .update({ active_clinic_id: data.clinic_id })
-      .eq("id", context.userId);
+    const { error } = await context.supabase.rpc("switch_active_clinic", { _clinic_id: data.clinic_id });
     if (error) throw new Error(error.message);
-    await supabaseAdmin.from("audit_log").insert({
-      user_id: context.userId,
+    await context.supabase.from("audit_log").insert({
       clinic_id: data.clinic_id,
       action: "platform.impersonate_clinic",
       entity_type: "clinic",
