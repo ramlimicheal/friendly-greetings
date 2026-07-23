@@ -890,36 +890,45 @@ export type Database = {
       invitations: {
         Row: {
           clinic_id: string
+          clinic_role: Database["public"]["Enums"]["clinic_role"]
           created_at: string
           email: string
           expires_at: string
           id: string
           invited_by: string | null
-          role: Database["public"]["Enums"]["app_role"]
-          token: string
+          revoked_at: string | null
+          revoked_by: string | null
+          token_hash: string
           used_at: string | null
+          used_by: string | null
         }
         Insert: {
           clinic_id?: string
+          clinic_role: Database["public"]["Enums"]["clinic_role"]
           created_at?: string
           email: string
           expires_at?: string
           id?: string
           invited_by?: string | null
-          role: Database["public"]["Enums"]["app_role"]
-          token?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash: string
           used_at?: string | null
+          used_by?: string | null
         }
         Update: {
           clinic_id?: string
+          clinic_role?: Database["public"]["Enums"]["clinic_role"]
           created_at?: string
           email?: string
           expires_at?: string
           id?: string
           invited_by?: string | null
-          role?: Database["public"]["Enums"]["app_role"]
-          token?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash?: string
           used_at?: string | null
+          used_by?: string | null
         }
         Relationships: [
           {
@@ -1841,6 +1850,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _require_clinic_admin: {
+        Args: { _clinic_id: string }
+        Returns: Database["public"]["Enums"]["clinic_role"]
+      }
+      accept_clinic_invitation: {
+        Args: { _raw_token: string }
+        Returns: {
+          clinic_id: string
+          role: Database["public"]["Enums"]["clinic_role"]
+        }[]
+      }
       can_access_current_clinic: { Args: never; Returns: boolean }
       check_appointment_conflict: {
         Args: {
@@ -1858,6 +1878,18 @@ export type Database = {
           patient_id: string
           provider: string
           start_at: string
+        }[]
+      }
+      create_clinic_invitation: {
+        Args: {
+          _clinic_id: string
+          _email: string
+          _expires_at?: string
+          _role: Database["public"]["Enums"]["clinic_role"]
+        }
+        Returns: {
+          id: string
+          raw_token: string
         }[]
       }
       current_clinic_id: { Args: never; Returns: string }
@@ -1893,6 +1925,57 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_clinic_invitations: {
+        Args: { _clinic_id: string }
+        Returns: {
+          clinic_role: Database["public"]["Enums"]["clinic_role"]
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          revoked_at: string
+          revoked_by: string
+          used_at: string
+          used_by: string
+        }[]
+      }
+      list_clinic_staff: {
+        Args: { _clinic_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["clinic_role"]
+          user_id: string
+        }[]
+      }
+      peek_clinic_invitation: {
+        Args: { _raw_token: string }
+        Returns: {
+          email: string
+          reason: string
+          role: Database["public"]["Enums"]["clinic_role"]
+          valid: boolean
+        }[]
+      }
+      revoke_clinic_invitation: {
+        Args: { _invitation_id: string }
+        Returns: undefined
+      }
+      set_clinic_member_active: {
+        Args: { _active: boolean; _clinic_id: string; _user_id: string }
+        Returns: undefined
+      }
+      set_clinic_member_role: {
+        Args: {
+          _clinic_id: string
+          _role: Database["public"]["Enums"]["clinic_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       set_platform_role: {
         Args: {
           _role: Database["public"]["Enums"]["platform_role"]

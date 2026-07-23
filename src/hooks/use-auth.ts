@@ -1,7 +1,12 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Legacy global-role type. Kept only as a type alias for historical imports.
+ * All authorization now flows through clinic-scoped roles via
+ * `useClinic()` / `usePermissions()`. Do NOT branch on `roles` for new code.
+ */
 export type AppRole = "admin" | "dentist" | "hygienist" | "front_desk";
 
 export type Profile = {
@@ -14,7 +19,6 @@ export type Profile = {
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,20 +27,15 @@ export function useAuth() {
     const load = async (u: User | null) => {
       if (!u) {
         setProfile(null);
-        setRoles([]);
         return;
       }
-      const [{ data: p }, { data: r }] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url, is_active")
-          .eq("id", u.id)
-          .maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", u.id),
-      ]);
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url, is_active")
+        .eq("id", u.id)
+        .maybeSingle();
       if (!mounted) return;
       setProfile((p as Profile) ?? null);
-      setRoles(((r ?? []) as { role: AppRole }[]).map((x) => x.role));
     };
 
     supabase.auth.getUser().then(({ data }) => {
@@ -58,15 +57,5 @@ export function useAuth() {
     };
   }, []);
 
-  const helpers = useMemo(
-    () => ({
-      hasRole: (r: AppRole) => roles.includes(r),
-      hasAnyRole: (rs: AppRole[]) => rs.some((r) => roles.includes(r)),
-      isAdmin: roles.includes("admin"),
-      isClinical: roles.some((r) => r === "admin" || r === "dentist" || r === "hygienist"),
-    }),
-    [roles],
-  );
-
-  return { user, profile, roles, loading, ...helpers };
+  return { user, profile, loading };
 }
