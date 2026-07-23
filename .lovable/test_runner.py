@@ -311,8 +311,31 @@ if __name__ == '__main__':
             expect = EXPECTATIONS[key][0]
             print(f"  [{persona}/{resource}/{op}] expected={expect} got={got}  {note}")
 
-    with open('/tmp/pgtest/harness/results.json','w') as f:
-        json.dump([
-            {'persona':k[0],'resource':k[1],'op':k[2],'status':s,'actual':a,'note':n}
-            for (k,s,a,n) in results
-        ], f, indent=2)
+    UNEXECUTED = [
+        {'suite': 'storage.objects (clinic-files bucket)',
+         'reason': 'requires live Supabase Storage API; SQL harness cannot exercise upload/download.'},
+        {'suite': 'realtime cross-clinic event isolation',
+         'reason': 'requires live Realtime server; publication + RLS presence checked, but subscription events not observed.'},
+    ]
+    print()
+    print(f"--- unexecuted external integrations (NOT counted as passes) : {len(UNEXECUTED)} ---")
+    for u in UNEXECUTED:
+        print(f"  · {u['suite']}: {u['reason']}")
+
+    out_path = os.environ.get('STAGE_D_RESULTS_JSON', '/tmp/pgtest/harness/results.json')
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, 'w') as f:
+        json.dump({
+            'totals': {
+                'passed': counts['pass'],
+                'failed': counts['fail'],
+                'skipped': counts['skipped'],
+                'unexecuted_external': len(UNEXECUTED),
+                'total_assertions': len(results),
+            },
+            'unexecuted_external': UNEXECUTED,
+            'results': [
+                {'persona':k[0],'resource':k[1],'op':k[2],'status':s,'actual':a,'note':n}
+                for (k,s,a,n) in results
+            ],
+        }, f, indent=2)
