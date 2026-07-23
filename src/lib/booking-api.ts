@@ -52,9 +52,9 @@ export async function submitPublicBookingRequest(input: {
     _clinic_slug: input.clinic_slug,
     _patient_name: input.patient_name,
     _email: input.email,
-    _phone: input.phone ?? null,
+    _phone: input.phone ?? "",
     _preferred_at: input.preferred_at,
-    _reason: input.reason ?? null,
+    _reason: input.reason ?? "",
   });
   if (error) throw error;
   return data as unknown as string;
