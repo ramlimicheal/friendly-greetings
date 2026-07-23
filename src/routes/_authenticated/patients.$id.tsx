@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AppShell, Card, GhostButton, PrimaryButton, Pill, SectionHeader } from "@/components/app-shell";
 import { PatientFormDialog } from "@/components/patient-form-dialog";
+import { PatientPortalAccessCard } from "@/components/patient-portal-access-card";
 import {
   ageFromDob,
   deletePatient,
@@ -312,16 +313,19 @@ function OverviewTab({ patient }: { patient: PatientRow }) {
     { t: "Added", v: formatDate(patient.created_at) },
   ];
   return (
-    <div>
-      <SectionHeader title="Overview" icon={FileText} />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {items.map((it) => (
-          <div key={it.t} className="rounded-2xl bg-muted/60 p-4">
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{it.t}</div>
-            <div className="mt-1 text-sm font-medium">{it.v}</div>
-          </div>
-        ))}
+    <div className="space-y-6">
+      <div>
+        <SectionHeader title="Overview" icon={FileText} />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {items.map((it) => (
+            <div key={it.t} className="rounded-2xl bg-muted/60 p-4">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{it.t}</div>
+              <div className="mt-1 text-sm font-medium">{it.v}</div>
+            </div>
+          ))}
+        </div>
       </div>
+      <PatientPortalAccessCard patientId={patient.id} patientEmail={patient.email} />
     </div>
   );
 }

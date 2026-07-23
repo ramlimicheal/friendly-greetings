@@ -1109,6 +1109,7 @@ export type Database = {
           created_at: string
           file_name: string
           id: string
+          is_patient_visible: boolean
           mime_type: string | null
           notes: string | null
           patient_id: string
@@ -1123,6 +1124,7 @@ export type Database = {
           created_at?: string
           file_name: string
           id?: string
+          is_patient_visible?: boolean
           mime_type?: string | null
           notes?: string | null
           patient_id: string
@@ -1137,6 +1139,7 @@ export type Database = {
           created_at?: string
           file_name?: string
           id?: string
+          is_patient_visible?: boolean
           mime_type?: string | null
           notes?: string | null
           patient_id?: string
@@ -1229,23 +1232,98 @@ export type Database = {
           },
         ]
       }
+      patient_portal_invitations: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          patient_id: string
+          revoked_at: string | null
+          revoked_by: string | null
+          token_hash: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          patient_id: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          patient_id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          token_hash?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_portal_invitations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_portal_invitations_patient_clinic_fk"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
+          },
+        ]
+      }
       patient_portal_users: {
         Row: {
           clinic_id: string
           created_at: string
+          invitation_id: string | null
+          is_active: boolean
+          linked_at: string
           patient_id: string
+          revoked_at: string | null
+          revoked_by: string | null
           user_id: string
         }
         Insert: {
           clinic_id: string
           created_at?: string
+          invitation_id?: string | null
+          is_active?: boolean
+          linked_at?: string
           patient_id: string
+          revoked_at?: string | null
+          revoked_by?: string | null
           user_id: string
         }
         Update: {
           clinic_id?: string
           created_at?: string
+          invitation_id?: string | null
+          is_active?: boolean
+          linked_at?: string
           patient_id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1255,6 +1333,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clinics"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_portal_users_patient_clinic_fk"
+            columns: ["patient_id", "clinic_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id", "clinic_id"]
           },
           {
             foreignKeyName: "patient_portal_users_patient_id_fkey"
@@ -1709,6 +1794,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          is_patient_visible: boolean
           notes: string | null
           patient_id: string
           presented_at: string | null
@@ -1723,6 +1809,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_patient_visible?: boolean
           notes?: string | null
           patient_id: string
           presented_at?: string | null
@@ -1737,6 +1824,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          is_patient_visible?: boolean
           notes?: string | null
           patient_id?: string
           presented_at?: string | null
@@ -1850,6 +1938,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _mask_email: { Args: { _email: string }; Returns: string }
       _require_clinic_admin: {
         Args: { _clinic_id: string }
         Returns: Database["public"]["Enums"]["clinic_role"]
@@ -1859,6 +1948,13 @@ export type Database = {
         Returns: {
           clinic_id: string
           role: Database["public"]["Enums"]["clinic_role"]
+        }[]
+      }
+      accept_portal_invitation: {
+        Args: { _raw_token: string }
+        Returns: {
+          clinic_id: string
+          patient_id: string
         }[]
       }
       can_access_current_clinic: { Args: never; Returns: boolean }
@@ -1892,7 +1988,15 @@ export type Database = {
           raw_token: string
         }[]
       }
+      create_portal_invitation: {
+        Args: { _email: string; _expires_at?: string; _patient_id: string }
+        Returns: {
+          id: string
+          raw_token: string
+        }[]
+      }
       current_clinic_id: { Args: never; Returns: string }
+      current_portal_clinic_id: { Args: never; Returns: string }
       current_portal_patient_id: { Args: never; Returns: string }
       has_any_role: {
         Args: {
@@ -1951,6 +2055,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_patient_portal_invitations: {
+        Args: { _patient_id: string }
+        Returns: {
+          created_at: string
+          email_masked: string
+          expires_at: string
+          id: string
+          revoked_at: string
+          used_at: string
+        }[]
+      }
       peek_clinic_invitation: {
         Args: { _raw_token: string }
         Returns: {
@@ -1960,7 +2075,25 @@ export type Database = {
           valid: boolean
         }[]
       }
+      peek_portal_invitation: {
+        Args: { _raw_token: string }
+        Returns: {
+          clinic_name: string
+          email_masked: string
+          expires_at: string
+          reason: string
+          valid: boolean
+        }[]
+      }
       revoke_clinic_invitation: {
+        Args: { _invitation_id: string }
+        Returns: undefined
+      }
+      revoke_portal_access: {
+        Args: { _patient_id: string }
+        Returns: undefined
+      }
+      revoke_portal_invitation: {
         Args: { _invitation_id: string }
         Returns: undefined
       }

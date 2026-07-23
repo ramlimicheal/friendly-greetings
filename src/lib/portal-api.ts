@@ -11,10 +11,12 @@ export async function getPortalLink(): Promise<PortalLink | null> {
   if (!u.user) return null;
   const { data } = await supabase
     .from("patient_portal_users")
-    .select("user_id, patient_id, clinic_id")
+    .select("user_id, patient_id, clinic_id, is_active")
     .eq("user_id", u.user.id)
+    .eq("is_active", true)
     .maybeSingle();
-  return (data as PortalLink | null) ?? null;
+  if (!data) return null;
+  return { user_id: data.user_id, patient_id: data.patient_id, clinic_id: data.clinic_id };
 }
 
 export async function getPortalPatient(patientId: string) {
@@ -108,4 +110,65 @@ export async function getPortalInvoices(patientId: string): Promise<PortalInvoic
     total: Number(i.subtotal ?? 0),
     balance: Math.max(0, Number(i.patient_portion ?? 0) - Number(i.amount_paid ?? 0)),
   }));
+}
+
+// ---- Portal invitations ----
+
+export type PortalInvitePeek = {
+  valid: boolean;
+  reason: string | null;
+  email_masked: string | null;
+  clinic_name: string | null;
+  expires_at: string | null;
+};
+
+export async function peekPortalInvitation(token: string): Promise<PortalInvitePeek | null> {
+  const { data, error } = await supabase.rpc("peek_portal_invitation", { _raw_token: token });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as PortalInvitePeek) ?? null;
+}
+
+export async function acceptPortalInvitation(token: string) {
+  const { data, error } = await supabase.rpc("accept_portal_invitation", { _raw_token: token });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return row as { patient_id: string; clinic_id: string } | null;
+}
+
+// ---- Staff-side invitation management ----
+
+export type StaffPortalInvitation = {
+  id: string;
+  email_masked: string;
+  expires_at: string;
+  used_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+};
+
+export async function listPatientPortalInvitations(patientId: string): Promise<StaffPortalInvitation[]> {
+  const { data, error } = await supabase.rpc("list_patient_portal_invitations", { _patient_id: patientId });
+  if (error) throw error;
+  return (data ?? []) as StaffPortalInvitation[];
+}
+
+export async function createPortalInvitation(patientId: string, email: string) {
+  const { data, error } = await supabase.rpc("create_portal_invitation", {
+    _patient_id: patientId,
+    _email: email,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return row as { id: string; raw_token: string };
+}
+
+export async function revokePortalInvitation(invitationId: string) {
+  const { error } = await supabase.rpc("revoke_portal_invitation", { _invitation_id: invitationId });
+  if (error) throw error;
+}
+
+export async function revokePortalAccess(patientId: string) {
+  const { error } = await supabase.rpc("revoke_portal_access", { _patient_id: patientId });
+  if (error) throw error;
 }

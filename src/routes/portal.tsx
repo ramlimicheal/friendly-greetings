@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Calendar, FileText, Receipt, User as UserIcon, LogOut, Plus, Loader2 } from "lucide-react";
+import { Calendar, FileText, Receipt, User as UserIcon, LogOut, Plus, Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getPortalLink,
@@ -8,11 +8,17 @@ import {
   getPortalAppointments,
   getPortalPlans,
   getPortalInvoices,
+  peekPortalInvitation,
+  acceptPortalInvitation,
+  type PortalInvitePeek,
 } from "@/lib/portal-api";
 import { formatDate } from "@/lib/patients-api";
 
 export const Route = createFileRoute("/portal")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({
+    invite: typeof s.invite === "string" ? s.invite : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Patient Portal — Enamel" },
@@ -26,6 +32,7 @@ export const Route = createFileRoute("/portal")({
 type Tab = "overview" | "appointments" | "plans" | "invoices";
 
 function PortalPage() {
+  const { invite } = useSearch({ from: "/portal" });
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<{ email: string; userId: string } | null>(null);
 
@@ -48,8 +55,143 @@ function PortalPage() {
     );
   }
 
+  if (invite) return <PortalInviteAccept token={invite} session={session} />;
   if (!session) return <PortalAuth />;
   return <PortalDashboard />;
+}
+
+function PortalInviteAccept({
+  token,
+  session,
+}: {
+  token: string;
+  session: { email: string; userId: string } | null;
+}) {
+  const navigate = useNavigate();
+  const [peek, setPeek] = useState<PortalInvitePeek | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setPeek(await peekPortalInvitation(token));
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "Failed to look up invitation");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [token]);
+
+  const accept = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await acceptPortalInvitation(token);
+      navigate({ to: "/portal", search: {} });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to accept invitation");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
+        <div className="mb-8 flex items-center gap-2.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Plus className="h-4 w-4" strokeWidth={3} />
+          </span>
+          <div className="leading-tight">
+            <div className="text-base font-semibold tracking-tight">Enamel</div>
+            <div className="text-[11px] text-muted-foreground">Patient portal invitation</div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl bg-card p-7 ring-1 ring-border">
+          {loading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : !peek || !peek.valid ? (
+            <>
+              <h1 className="text-xl font-semibold tracking-tight">Invitation unavailable</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {peek?.reason === "expired"
+                  ? "This invitation has expired. Please ask your clinic to send a new one."
+                  : peek?.reason === "used"
+                    ? "This invitation has already been used."
+                    : peek?.reason === "revoked"
+                      ? "This invitation has been revoked."
+                      : "This invitation link is not valid."}
+              </p>
+              <Link
+                to="/portal"
+                search={{}}
+                className="mt-6 inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                Back to portal
+              </Link>
+            </>
+          ) : (
+            <>
+              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium">
+                <ShieldCheck className="h-3.5 w-3.5" /> Verified invitation
+              </div>
+              <h1 className="text-xl font-semibold tracking-tight">
+                {peek.clinic_name ?? "Your clinic"} invited you
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Sign in with <span className="font-medium text-foreground">{peek.email_masked}</span> to
+                link this invitation to your account.
+              </p>
+
+              {session ? (
+                <>
+                  <div className="mt-5 rounded-xl border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                    Signed in as <span className="font-medium text-foreground">{session.email}</span>.
+                    Your email must match the invitation exactly.
+                  </div>
+                  {err && (
+                    <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                      {err}
+                    </div>
+                  )}
+                  <button
+                    onClick={accept}
+                    disabled={busy}
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-60"
+                  >
+                    {busy ? "Linking…" : "Accept invitation"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="mt-5 text-sm">
+                    Please sign in or create your account first — then return to this link to finish.
+                  </p>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      onClick={() => window.location.assign(`/portal`)}
+                      className="inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+                    >
+                      Sign in to continue
+                    </button>
+                    <div className="text-center text-[11px] text-muted-foreground">
+                      After signing in, return to the invitation link from your email.
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function PortalAuth() {
@@ -77,8 +219,9 @@ function PortalAuth() {
           },
         });
         if (error) throw error;
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) setInfo("Check your email to confirm your account.");
+        setInfo(
+          "Check your email to confirm your account. After confirming, open the invitation link your clinic sent you to link your patient record.",
+        );
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -93,7 +236,7 @@ function PortalAuth() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
-        <Link to="/portal" className="mb-8 flex items-center gap-2.5">
+        <Link to="/portal" search={{}} className="mb-8 flex items-center gap-2.5">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Plus className="h-4 w-4" strokeWidth={3} />
           </span>
@@ -110,7 +253,7 @@ function PortalAuth() {
           <p className="mt-1 text-sm text-muted-foreground">
             {mode === "signin"
               ? "Access your appointments, treatment plans and invoices."
-              : "Use the same email your clinic has on file so we can link your records."}
+              : "Access to your records is granted by your clinic. Create an account, then open the invitation link they sent you."}
           </p>
 
           <form onSubmit={submit} className="mt-6 space-y-3">
@@ -253,11 +396,11 @@ function PortalDashboard() {
       <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-lg px-6 py-16">
           <div className="rounded-3xl bg-card p-7 ring-1 ring-border">
-            <h1 className="text-lg font-semibold">We couldn't find your patient record</h1>
+            <h1 className="text-lg font-semibold">No portal access yet</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Your account isn't linked to a patient chart yet. Please contact your clinic and ask them
-              to add your account email to your file. Once they do, sign in again and your records will
-              appear here automatically.
+              Your account isn't linked to a patient record. Access to the patient portal is granted by
+              your clinic through a secure invitation link sent to your email. If you haven't received
+              one, please contact your clinic and ask them to send a portal invitation.
             </p>
             <button
               onClick={signOut}
@@ -280,7 +423,7 @@ function PortalDashboard() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-card/50 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link to="/portal" className="flex items-center gap-2.5">
+          <Link to="/portal" search={{}} className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Plus className="h-4 w-4" strokeWidth={3} />
             </span>
@@ -402,7 +545,7 @@ function PortalDashboard() {
 
         {tab === "plans" && (
           <div className="space-y-4">
-            {plans.length === 0 && <Empty>No treatment plans yet.</Empty>}
+            {plans.length === 0 && <Empty>No treatment plans shared with you yet.</Empty>}
             {plans.map((p) => (
               <div key={p.id} className="rounded-2xl bg-card p-5 ring-1 ring-border">
                 <div className="flex items-start justify-between gap-3">
